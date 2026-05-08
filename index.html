@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Carteira — Gestão de Portfólio</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./src/styles/main.css">
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="logo">portfólio/<span>B3</span></div>
+      <div class="topbar-right">
+        <div class="valor-input-wrap" style="margin-right: 12px;">
+          <span class="valor-prefix">R$</span>
+          <input type="number" class="valor-input" id="aporteValor" placeholder="Valor do aporte" style="width: 160px; font-size: 13px; padding: 6px 10px 6px 30px;">
+        </div>
+        <button class="btn-green" id="btnCalc">Calcular Aporte</button>
+        
+        <div style="width: 1px; height: 24px; background: var(--border); margin: 0 10px;"></div>
+
+        <button class="btn" id="btnTheme" title="Alternar tema">☀️</button>
+        <button class="btn" id="btnConfig" title="Configurações">⚙️</button>
+        <button class="btn" id="btnRefresh">
+          <span id="refreshIcon">↻</span> atualizar preços
+        </button>
+
+        <div style="width: 1px; height: 24px; background: var(--border); margin: 0 10px;"></div>
+
+        <div id="userProfile" style="display: flex; align-items: center; gap: 10px;">
+          <span id="userEmail" style="font-size: 12px; color: var(--muted); font-family: 'DM Mono', monospace;"></span>
+          <button class="btn" id="btnLogin">Entrar</button>
+          <button class="btn" id="btnLogout" style="display: none; color: var(--red);">Sair</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="sum-warning" id="sumWarning" style="display: none;">
+      ⚠️ A soma dos pesos-alvo é <span id="currentSumText">0%</span>. Ajuste para 100% para um reequilíbrio preciso.
+    </div>
+
+    <!-- Summary -->
+    <div class="summary">
+      <div class="card" id="sumTotalCard">
+        <div class="card-label">PATRIMÔNIO TOTAL</div>
+        <div class="card-value" id="sumTotal">R$ —</div>
+        <div class="card-sub" id="sumAtivos">— ativos com posição</div>
+      </div>
+      <div class="card" id="sumDivCard">
+        <div class="card-label">DIVIDENDOS (real)</div>
+        <div class="card-value" id="sumDiv" style="color:var(--green)">—%</div>
+        <div class="card-sub">meta: 66%</div>
+      </div>
+      <div class="card" id="sumCresCard">
+        <div class="card-label">CRESCIMENTO (real)</div>
+        <div class="card-value" id="sumCres" style="color:var(--blue)">—%</div>
+        <div class="card-sub">meta: 34%</div>
+      </div>
+      <div class="card">
+        <div class="card-label">DESVIO MÉDIO</div>
+        <div class="card-value" id="sumDesvio">—</div>
+        <div class="card-sub">da alocação-alvo</div>
+      </div>
+      <div class="card">
+        <div class="card-label">TOTAL PROJETADO</div>
+        <div class="card-value" id="saldoValor">R$ —</div>
+        <div class="card-sub">patrimônio + aporte</div>
+      </div>
+      <div class="card">
+        <div class="card-label">STATUS PREÇOS</div>
+        <div class="card-value" style="font-size:13px;padding-top:4px;" id="sumStatus">
+          <span class="status-dot status-load"></span>carregando
+        </div>
+        <div class="card-sub" id="sumStatusSub">aguarde...</div>
+      </div>
+    </div>
+
+    <!-- Alloc bar -->
+    <div class="alloc-section">
+      <div class="alloc-header">
+        <span class="alloc-label">ALOCAÇÃO ATUAL</span>
+        <span class="alloc-label" id="allocText">— / —</span>
+      </div>
+      <div class="alloc-bar-wrap">
+        <div class="alloc-div-fill" id="allocDivBar" style="width:0%"></div>
+        <div class="alloc-cres-fill" id="allocCresBar" style="width:0%"></div>
+      </div>
+      <div class="alloc-legend">
+        <div class="alloc-leg-item"><div class="leg-dot" style="background:var(--green)"></div>Dividendos (meta 66%)</div>
+        <div class="alloc-leg-item"><div class="leg-dot" style="background:var(--blue)"></div>Crescimento (meta 34%)</div>
+      </div>
+    </div>
+
+    <!-- Table Dividendos -->
+    <div class="section-header">
+      <span class="section-title">DIVIDENDOS</span>
+      <span class="section-count" id="countDiv">0 ativos · meta 66%</span>
+      <button class="btn-icon" id="btnAddDiv">+ adicionar ativo</button>
+    </div>
+    <div class="table-wrap">
+      <table id="tableDiv">
+        <thead>
+          <tr>
+            <th data-sort="ticker">Ticker</th>
+            <th data-sort="setor">Setor</th>
+            <th class="right" data-sort="price">Preço</th>
+            <th class="right" data-sort="qty">Qtd</th>
+            <th class="right" data-sort="target">Alvo (qtd)</th>
+            <th class="right">Ajuste</th>
+            <th class="right" data-sort="valor">Valor</th>
+            <th class="right" data-sort="peso">Alvo</th>
+            <th class="right">Atual</th>
+            <th class="right" style="width: 40px;"></th>
+          </tr>
+        </thead>
+        <tbody id="tbodyDiv"></tbody>
+      </table>
+    </div>
+
+    <hr class="divider">
+
+    <!-- Table Crescimento -->
+    <div class="section-header">
+      <span class="section-title">CRESCIMENTO</span>
+      <span class="section-count" id="countCres">0 ativos · meta 34%</span>
+      <button class="btn-icon" id="btnAddCres">+ adicionar ativo</button>
+    </div>
+    <div class="table-wrap">
+      <table id="tableCres">
+        <thead>
+          <tr>
+            <th data-sort="ticker">Ticker</th>
+            <th data-sort="setor">Setor</th>
+            <th class="right" data-sort="price">Preço</th>
+            <th class="right" data-sort="qty">Qtd</th>
+            <th class="right" data-sort="target">Alvo (qtd)</th>
+            <th class="right">Ajuste</th>
+            <th class="right" data-sort="valor">Valor</th>
+            <th class="right" data-sort="peso">Alvo</th>
+            <th class="right">Atual</th>
+            <th class="right" style="width: 40px;"></th>
+          </tr>
+        </thead>
+        <tbody id="tbodyCres"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Auth Modal -->
+  <div id="authModal" class="modal-overlay" style="display: none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <span class="modal-title">Acesse sua conta</span>
+        <button id="closeModal" class="btn-remove">×</button>
+      </div>
+      <form id="authForm">
+        <div class="input-group">
+          <label>E-mail</label>
+          <input type="email" name="email" required placeholder="seu@email.com">
+        </div>
+        <div class="input-group">
+          <label>Senha</label>
+          <input type="password" name="password" required placeholder="••••••••">
+        </div>
+        <div id="authError" style="font-size: 11px; margin: -8px 0 16px; display: none; font-family: 'DM Mono', monospace;"></div>
+        <div class="modal-actions">
+          <button type="submit" data-mode="login" class="btn-green" style="flex: 1;">Entrar</button>
+          <button type="submit" data-mode="signup" class="btn" style="flex: 1;">Cadastrar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div id="settingsModal" class="modal-overlay" style="display: none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <span class="modal-title">Configurações</span>
+        <button id="closeSettings" class="btn-remove">×</button>
+      </div>
+      <div class="input-group">
+        <label>Token BrAPI (brapi.dev)</label>
+        <input type="text" id="apiTokenInput" placeholder="Seu token">
+        <button class="btn-green" id="btnSaveToken" style="width: 100%; margin-top: 8px;">Salvar Token</button>
+      </div>
+      <hr class="divider" style="margin: 16px 0;">
+      <div class="modal-actions" style="flex-direction: column; gap: 8px;">
+        <button id="btnExport" class="btn" style="width: 100%; text-align: left;">📤 Exportar Portfólio (JSON)</button>
+        <button id="btnImport" class="btn" style="width: 100%; text-align: left;">📥 Importar Portfólio (JSON)</button>
+        <input type="file" id="fileInput" style="display: none;" accept=".json">
+        <button id="btnHardReset" class="btn" style="width: 100%; text-align: left; color: var(--red); border-color: var(--red-dim);">🗑️ Resetar Tudo (CUIDADO)</button>
+        <button id="btnRestoreDefaults" class="btn" style="width: 100%; text-align: left; margin-top: 8px;">🔄 Restaurar Ativos Padrão</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
