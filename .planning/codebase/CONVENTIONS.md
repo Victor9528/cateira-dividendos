@@ -5,136 +5,146 @@
 ## Naming Patterns
 
 **Files:**
-- kebab-case: `main.js`, `ui.js`, `api.js`, `auth.js`, `state.js`, `theme.js`, `logic.js`, `supabase.js`
-- Modules in `src/modules/` subdirectory
+- Pattern: `lowercase.js` for modules (e.g., `state.js`, `api.js`, `logic.js`)
+- Special modules: `ui.js`, `auth.js`, `theme.js`
+- Main entry: `main.js`
 
 **Functions:**
-- camelCase: `handleRefresh`, `loadState`, `saveState`, `fetchPrices`, `calcTargetQuantities`, `fmtBRL`
-- Verb-noun pattern for action functions: `handleRefresh`, `handleCalc`, `handleUpdateToken`
-- get/set prefix for accessor functions: `getValorAtivo`, `getTotalPortfolio`
+- Pattern: camelCase (e.g., `loadState`, `fetchPrices`, `calcTargetQuantities`)
+- UI handlers: `handle` prefix (e.g., `handleRefresh`, `handleCalc`, `handleAddAsset`)
+- Action functions: verbs (e.g., `addAsset`, `removeAsset`, `validateTicker`)
 
 **Variables:**
-- camelCase: `quantities`, `targetQuantities`, `lastPriceFetch`, `sortConfig`
-- Portuguese business terms: `ATIVOS` (assets), `quantities` (quantities), `setor` (sector), `peso` (weight)
-- booleans use is/has pattern: none observed
-- Temporary variables: `agora` (now), `diff`, `valA`, `valB`
+- Pattern: camelCase (e.g., `quantities`, `prices`, `targetQuantities`)
+- State arrays: PascalCase Portuguese (e.g., `ATIVOS`)
+- DOM elements: lowercase (e.g., `tbody`, `tr`)
 
 **Constants:**
-- UPPER_SNAKE_CASE: `DEFAULT_ATIVOS`
-- Note: `apiToken` is a `let` (not a true constant) in `src/modules/state.js:41`
-
-**Types/Objects:**
-- Business entities use PascalCase in code: `{ ticker:'ITUB4', setor:'Bancos', cat:'div', peso:6 }`
-- Category values: `'div'` (dividends), `'cres'` (growth)
+- Pattern: SCREAMING_SNAKE_CASE (e.g., `DEFAULT_ATIVOS`)
+- Config values: camelCase but module-level (e.g., `apiToken`, `sortConfig`)
 
 ## Code Style
 
 **Formatting:**
-- Tool: None configured (no Prettier, ESLint, or Biome)
-- Manual formatting observed
-- 2-4 spaces indentation mixed (2-space typical)
-- Opening brace on same line as function/condition
+- Tool: Not configured
+- Manual formatting observed: 2-space indentation
+- Line length: Variable, no enforced limit
 
 **Linting:**
-- No linting tool configured
-- No .eslintrc or biome.json found
-- No VS Code workspace settings observed
-
-**General Style:**
-- ES6 modules with `import`/`export`
-- `import { } from './path.js'` syntax
-- Uses template literals for string interpolation: `` `preços de hoje, ${time}` ``
-- Uses arrow functions: `(ticker, val) => { ... }`, `(a, b) => { ... }`
-- Uses `const` for most variables, `let` only for mutable state (`apiToken`, `ATIVOS`)
+- Tool: Not configured
+- No ESLint, Prettier, or Biome config found
 
 ## Import Organization
 
 **Order:**
-1. Local module imports (relative paths)
-2. No third-party imports observed (except @supabase/supabase-js in `src/modules/supabase.js`)
+1. Named imports from external modules (`import { x } from 'module'`)
+2. Named imports from local modules (`import { x } from './modules/file.js'`)
 
-**Path Aliases:**
-- None configured (no alias in vite.config.js)
-
-**Example from `src/main.js`:**
+**Example:**
 ```javascript
-import {
-  ATIVOS, quantities, apiToken, loadState, saveState, updateApiToken,
-  addAsset, removeAsset, targetQuantities, lastPriceFetch, updateSort,
-  syncFromSupabase, clearLocalState, exportPortfolio, importPortfolio, hardReset, restoreDefaults
-} from './modules/state.js';
+import { ATIVOS, quantities, apiToken, loadState, saveState } from './modules/state.js';
 import { fetchPrices, validateTicker } from './modules/api.js';
 import { calcTargetQuantities, fmtBRL } from './modules/logic.js';
 ```
 
+**Path Aliases:**
+- Not configured; relative paths used throughout (`./modules/`)
+
 ## Error Handling
 
 **Patterns:**
-- try/catch blocks in async functions (`src/main.js:74-85`, `src/modules/api.js:42-60`)
-- Error re-throwing: `if (error) throw error;` in `src/modules/auth.js`
-- User feedback via `alert()`: `alert('Token salvo!')`, `alert("Erro ao validar ticker.")`
-- Console logging: `console.error(err)`, `console.warn(...)`
-- Graceful degradation: `if (!resp.ok) continue;` in `src/modules/api.js:20`
-- Input validation: `parseInt(val) || 0`, `parseFloat(valStr) || 0`
+- Simple try/catch blocks for async operations (see `src/modules/state.js:44-71`)
+- Console.error for logging errors (e.g., `console.error("Erro ao carregar estado:", e)`)
+- User-facing alerts for important errors (e.g., `alert("Erro ao validar ticker.")`)
+- Silent failures for non-critical operations (e.g., `fetchPrices` continues on individual asset failures)
 
-**Error Types:**
-- API errors handled with user-friendly messages in auth module (`src/modules/auth.js:152-158`)
-- Network errors: AbortError detection in `src/modules/api.js:33`
-- LocalStorage errors: try/catch in `src/modules/state.js:44-70`
+**Error Examples:**
+```javascript
+// Pattern in api.js - Silent failure with logging
+} catch(e) {
+  clearTimeout(timeoutId);
+  console.warn(`Erro ao buscar ${a.ticker}:`, e.name === 'AbortError' ? 'timeout' : e);
+}
+
+// Pattern in state.js - Error with alert
+} catch(e) {
+  console.error("Erro ao carregar estado:", e);
+}
+```
 
 ## Logging
 
-**Framework:** Browser console (`console.log`, `console.warn`, `console.error`)
+**Framework:** `console` (native browser)
 
 **Patterns:**
-- `console.error` for failures: `console.error("Erro ao carregar estado:", e)` in `src/modules/state.js:69`
-- `console.warn` for non-critical issues: `console.warn(\`Erro ao buscar ${a.ticker}:\`, ...)` in `src/modules/api.js:33`
-- No structured logging library
-- No log level configuration
+- `console.error` for failures (e.g., `console.error("Erro ao carregar estado:", e)`)
+- `console.warn` for recoverable issues (e.g., timeout/network errors)
+- `console.error` in auth.js for sign-out errors
+
+**No structured logging** - no logger libraries configured
 
 ## Comments
 
 **When to Comment:**
-- Section markers: `// --- Callbacks for UI ---`, `// --- Event Handlers ---`, `// --- Initialization ---` in `src/main.js`
-- Inline explanations: `// Update state with results` in `src/main.js:94`
-- Clarification: `// Clear fields` in `src/main.js:168`
-- TODO: None observed
-- FIXME: None observed
+- Minimal comments observed - primarily section markers (e.g., `// --- Callbacks for UI ---`)
+- No JSDoc/TSDoc blocks found
+- Inline explanations for complex logic (e.g., inline in `renderTables` for sorting)
 
 **JSDoc/TSDoc:**
-- Not used
-- No JSDoc annotations observed
+- Not used - no documentation comments observed
 
 ## Function Design
 
-**Size:**
-- Medium-sized functions, typically 10-50 lines
-- Single-responsibility: `handleRefresh()` handles one task, `handleCalc()` another
+**Size:** Varies; single-responsibility functions observed
 
 **Parameters:**
-- Multiple parameters: `(ticker, val)`, `(ticker, delta)`
-- Object parameters: none observed
-- Callback pattern: `(callbacks)` object in `renderTables(callbacks)` in `src/modules/ui.js:143`
+- Direct parameters (e.g., `(ticker, val)`, `(assets, aporteAmount)`)
+- Objects passed for callbacks (e.g., `uiCallbacks` object in main.js)
 
 **Return Values:**
-- Explicit returns in all functions
-- Async functions return Promises implicitly
-- Early returns for validation: `if (!assets || assets.length === 0) return;`
+- Explicit returns for sync functions
+- Async/await for Promise-based functions
+- Boolean returns for validation (e.g., `validateTicker`)
 
 ## Module Design
 
 **Exports:**
-- Named exports: `export function setStatus(...)`, `export function renderRow(...)`
-- Direct exports of state: `export let ATIVOS = [...]`
+- Named exports only (e.g., `export function loadState()`)
 - No default exports
 
 **Barrel Files:**
-- None used
-- Each module is standalone
+- Not used; direct module imports
 
-**Module Pattern:**
-- Single responsibility per file
-- Clear separation: `state.js` (state), `ui.js` (rendering), `api.js` (external), `logic.js` (business), `auth.js` (authentication), `theme.js` (UI theme)
+## Event Handling
+
+**Patterns:**
+1. Inline in HTML (e.g., `onclick="handleRefresh()"`)
+2. Named handlers assigned in JS (e.g., `document.getElementById('btnRefresh').onclick = handleRefresh`)
+3. Form submissions via `onsubmit` (e.g., `document.getElementById('assetForm').onsubmit = onAssetFormSubmit`)
+4. Input events via `onchange` and `oninput`
+
+**Example from main.js:**
+```javascript
+document.getElementById('btnRefresh').onclick = handleRefresh;
+document.getElementById('btnTheme').onclick = toggleTheme;
+document.getElementById('assetForm').onsubmit = onAssetFormSubmit;
+```
+
+## State Management
+
+**Approach:** Module-level mutable state (exported let variables)
+
+**Example from state.js:**
+```javascript
+export let ATIVOS = [...DEFAULT_ATIVOS];
+export let prices = {};
+export let quantities = {};
+export let targetQuantities = {};
+```
+
+**Persistence:** localStorage with JSON serialization
+
+**Synchronization:** Supabase cloud sync via `saveToSupabase()` and `syncFromSupabase()`
 
 ---
 

@@ -5,62 +5,82 @@
 ## Test Framework
 
 **Runner:**
-- Not configured
-- No testing framework in `package.json`
-- No Jest, Vitest, Mocha, or other test runners installed
+- Framework: Not configured
+- No test runner installed (jest, vitest, etc.)
+- Config: No config files found
 
 **Assertion Library:**
-- Not applicable (no tests)
+- Not configured
 
 **Run Commands:**
-```bash
-# No test commands available
-# npm test          # Not configured
-# npm run test      # Not configured
-```
+- No test scripts defined in package.json
+
+**Status:** No automated tests in project
 
 ## Test File Organization
 
 **Location:**
-- No tests directory found
-- No test files exist in the project
+- Co-located: Not applicable (no test files)
 
 **Naming:**
-- No test file pattern established
+- Not applicable
 
 **Structure:**
-```
-# No testing structure observed
-```
+- Not applicable
 
 ## Test Structure
 
 **Suite Organization:**
-- Not applicable
+- No test suites defined
 
 **Patterns:**
 - Not applicable
+
+## Manual Testing
+
+**Approach:** Manual browser testing via loaded application
+
+**How Tested:**
+- Price fetching: Loading app and triggering `handleRefresh()`
+- Calculations: Using `handleCalc()` with test values
+- Auth flow: UI-based sign-up/sign-in flow
+- Import/export: File I/O through UI
+
+**No unit tests** for core logic functions like:
+- `calcTargetQuantities()` in logic.js
+- `fmtBRL()`, `fmtPct()` in logic.js
+- `fetchPrices()` in api.js
+- State management functions in state.js
 
 ## Mocking
 
-**Framework:** Not applicable
+**Framework:** None
 
 **Patterns:**
 - Not applicable
 
-**What to Mock:**
-- No guidelines established
+**What to Mock (if tests added):**
+- localStorage (window.localStorage)
+- Supabase client
+- fetch API calls
 
 **What NOT to Mock:**
-- No guidelines established
+- Core business logic functions
 
 ## Fixtures and Factories
 
 **Test Data:**
-- Not applicable
+```javascript
+// Example test fixture from DEFAULT_ATIVOS in state.js
+const DEFAULT_ATIVOS = [
+  { ticker:'ITUB4', setor:'Bancos', cat:'div', peso:6 },
+  { ticker:'BBSE3', setor:'Seguros', cat:'div', peso:6 },
+  // ...
+];
+```
 
 **Location:**
-- No fixtures directory
+- Defined in `src/modules/state.js` as DEFAULT_ATIVOS constant
 
 ## Coverage
 
@@ -68,162 +88,78 @@
 
 **View Coverage:**
 ```bash
-# No coverage tool configured
+# No test runner configured - no coverage reports available
 ```
 
 ## Test Types
 
 **Unit Tests:**
-- Not implemented
-- No unit tests for utility functions like `fmtBRL()`, `fmtPct()`, `getValorAtivo()`, `calcTargetQuantities()`
+- Status: Not implemented
+- Functions that need tests: `calcTargetQuantities`, `fmtBRL`, `fmtPct`, `getTotalPortfolio`, `getValorAtivo`
 
 **Integration Tests:**
-- Not implemented
-- No integration tests for API calls in `src/modules/api.js`
-- No integration tests for Supabase sync in `src/modules/state.js`
+- Status: Not implemented
+- Supabase sync would need integration tests
 
 **E2E Tests:**
-- Not used
-- No Playwright, Cypress, or Selenium tests
+- Status: Not implemented
+- No Playwright or Cypress configured
 
 ## Common Patterns
 
 **Async Testing:**
-- Not implemented
-
-**Error Testing:**
-- Not implemented
-
-## Testing Gaps and Recommendations
-
-### Critical Testing Gaps
-
-**1. Business Logic Functions (High Priority)**
-- Functions in `src/modules/logic.js` lack unit tests:
-  - `getValorAtivo(a)` - calculates asset value
-  - `getTotalPortfolio(assets)` - calculates total portfolio
-  - `calcTargetQuantities(assets, aporteAmount)` - calculates target quantities
-  - `fmtBRL(v)` - currency formatting
-  - `fmtPct(v)` - percentage formatting
-- These pure functions are ideal for unit testing with various input scenarios
-
-**2. State Management Functions (High Priority)**
-- `src/modules/state.js` functions need testing:
-  - `loadState()` / `saveState()` - localStorage operations
-  - `addAsset(asset)` / `removeAsset(ticker)` - asset management
-  - `importPortfolio(jsonString)` / `exportPortfolio()` - serialization
-  - `calcTargetQuantities` is called but results are manually verified
-
-**3. API Functions (Medium Priority)**
-- `src/modules/api.js` functions need mock-based testing:
-  - `fetchPrices(assets, onUpdate)` - external API calls
-  - `validateTicker(ticker)` - ticker validation
-- These require mocking `fetch()` or using MSW (Mock Service Worker)
-
-**4. Authentication Flow (Medium Priority)**
-- `src/modules/auth.js` functions need testing:
-  - Sign up, sign in, sign out flows
-  - Error handling and user feedback
-- Requires Supabase client mocking
-
-**5. UI Rendering (Low Priority)**
-- `src/modules/ui.js` functions need testing:
-  - `renderRow()`, `renderTables()`, `updateSummary()`
-- Complex DOM manipulation, could use JSDOM or similar
-
-### Recommended Testing Setup
-
+- Pattern: async/await used in main.js handlers
+- Example:
 ```javascript
-// package.json additions (recommended)
-{
-  "devDependencies": {
-    "vitest": "^1.0.0",
-    "@testing-library/dom": "^9.0.0",
-    "jsdom": "^24.0.0"
-  },
-  "scripts": {
-    "test": "vitest",
-    "test:run": "vitest run",
-    "test:coverage": "vitest run --coverage"
+async function handleRefresh(force = false) {
+  try {
+    await fetchPrices(ATIVOS, () => { /* callback */ });
+    setStatus('ok', 'cotações atualizadas');
+  } catch (e) {
+    setStatus('err', 'erro ao buscar preços');
   }
 }
 ```
 
-### Test File Location Convention (Recommended)
+**Error Testing:**
+- Error handling done via try/catch in handlers
+- No dedicated error test coverage
 
-```
-src/
-├── modules/
-│   ├── logic.js
-│   ├── logic.test.js       # Unit tests for logic module
-│   ├── state.test.js       # Unit tests for state module
-│   └── api.test.js         # Tests with mocked fetch
-```
+## Testing Gaps
 
-### Example Test Pattern (Recommended)
+### Critical Functions Needing Tests
 
-```javascript
-// src/modules/logic.test.js (example)
-import { describe, it, expect } from 'vitest';
-import { fmtBRL, fmtPct, getValorAtivo } from './logic.js';
-import { quantities, prices } from './state.js';
-
-describe('fmtBRL', () => {
-  it('formats number as Brazilian Real', () => {
-    expect(fmtBRL(1234.56)).toBe('R$ 1.234,56');
-  });
-
-  it('handles NaN', () => {
-    expect(fmtBRL(NaN)).toBe('—');
-  });
-});
-
-describe('calcTargetQuantities', () => {
-  it('calculates correct quantities for each asset', () => {
-    const assets = [
-      { ticker: 'ITUB4', peso: 50 },
-      { ticker: 'PETR4', peso: 50 }
-    ];
-    prices.ITUB4 = 30;
-    prices.PETR4 = 10;
-    quantities.ITUB4 = 10;
-    quantities.PETR4 = 0;
-
-    const { results } = calcTargetQuantities(assets, 1000);
-
-    expect(results.ITUB4).toBeGreaterThan(10); // Should increase
-  });
-});
-```
-
-### What Should Be Tested
-
-**Priority 1 - Pure Functions:**
-- All functions in `src/modules/logic.js` (100% testable)
-- Formatting functions: `fmtBRL`, `fmtPct`
-- Calculation functions: `getValorAtivo`, `getTotalPortfolio`, `calcTargetQuantities`
-
-**Priority 2 - State Functions:**
-- State mutations: `addAsset`, `removeAsset`, `updateApiToken`
-- Persistence: `loadState`, `saveState` (mock localStorage)
-- Serialization: `exportPortfolio`, `importPortfolio`
-
-**Priority 3 - API Functions:**
-- With mocked fetch: `fetchPrices`, `validateTicker`
-- Error handling paths
-- Timeout handling
-
-**Priority 4 - Integration:**
-- Supabase sync (mock Supabase client)
-- Authentication flow (mock Supabase auth)
+| Function | File | Why Untested |
+|----------|------|--------------|
+| `calcTargetQuantities` | logic.js | Core calculation logic for allocation |
+| `fmtBRL` | logic.js | Currency formatting - critical for display |
+| `fmtPct` | logic.js | Percentage display |
+| `getTotalPortfolio` | logic.js | Portfolio value calculation |
+| `fetchPrices` | api.js | External API integration |
+| `validateTicker` | api.js | User input validation |
+| `loadState` | state.js | localStorage persistence |
+| `saveState` | state.js | localStorage + Supabase sync |
+| `importPortfolio` | state.js | File import validation |
+| `renderTables` | ui.js | DOM manipulation |
 
 ### Testing Recommendations
 
-1. **Install Vitest** as testing framework (already using Vite, so Vitest integrates well)
-2. **Start with logic.js** - pure functions are easiest to test
-3. **Use Vite's environment** - `import.meta.env` for test configuration
-4. **Mock localStorage** - create a test utilities file for localStorage/Supabase mocking
-5. **Add CI** - run tests on every commit using GitHub Actions
+**Immediate Needs:**
+1. Add vitest or jest for unit testing
+2. Add mocks for localStorage
+3. Add mocks for Supabase client
+4. Add mocks for fetch API
+
+**Suggested Test Structure:**
+```
+src/
+  modules/
+    logic.js
+    logic.test.js    # Unit tests
+  __tests__/
+    state.test.js   # localStorage mocks
+    api.test.js     # fetch mocks
+```
 
 ---
 

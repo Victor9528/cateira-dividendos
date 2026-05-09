@@ -7,160 +7,218 @@
 
 ```text
 ┌─────────────────────────────────────────────────────────────┐
-│                    index.html                               │
-│              (Single Page Entry)                           │
+│                        UI Layer                             │
+│                  `index.html` (DOM structure)               │
 ├─────────────────────────────────────────────────────────────┤
-│                      src/main.js                          │
-│              (Main Orchestrator)                          │
-├───────────┬───────────┬───────────┬───────────┬────────────┤
-│  ui.js    │ logic.js  │  api.js  │  state.js  │  auth.js   │
-│ (Render)  │  (Calc)  │ (Fetch)  │  (Data)   │  (Auth)   │
-└───────────┴───────────┴───────────┴───────────┴────────────┘
-         │          │          │          │          │
-         ▼          ▼          ▼          ▼          ▼
-┌─────────────────────────────────────────────────────────────┐
-│   DOM + localStorage + Supabase (Cloud) + BrAPI (External)  │
-└─────────────────────────────────────────────────────────────┘
+│                  Presentation Layer                         │
+│         `src/modules/ui.js`  `src/styles/main.css`          │
+│    (rendering, summaries, tables, modals)                   │
+├─────────────────────────────────────────────────────────────┤
+│                  Application Layer                          │
+│                    `src/main.js`                            │
+│   (event handlers, orchestration, callbacks, init)          │
+├──────────────────┬──────────────────┬───────────────────────┤
+│   State Layer    │   Logic Layer    │   Integration Layer   │
+│ `src/modules/`   │ `src/modules/`   │ `src/modules/`        │
+│  state.js        │  logic.js       │  api.js               │
+│  theme.js        │                  │  auth.js              │
+│                  │                  │  supabase.js         │
+└──────────────────┴──────────────────┴───────────────────────┘
+         │                                        │
+         ▼                                        ▼
+┌─────────────────────┐          ┌─────────────────────────────────────┐
+│    LocalStorage     │          │      External Services               │
+│ (local persistence) │          │  brapi.dev (price API)               │
+│                     │          │  Supabase (auth + cloud sync)        │
+└─────────────────────┘          └─────────────────────────────────────┘
 ```
 
 ## Component Responsibilities
 
 | Component | Responsibility | File |
 |-----------|----------------|------|
-| main.js | Event handling, initialization,orchestration | `src/main.js` |
-| ui.js | Table rendering, summary cards, status display | `src/modules/ui.js` |
-| logic.js | Portfolio calculations, target quantities | `src/modules/logic.js` |
-| state.js | State management, persistence, cloud sync | `src/modules/state.js` |
-| api.js | External API calls to BrAPI | `src/modules/api.js` |
-| auth.js | Supabase authentication UI | `src/modules/auth.js` |
-| supabase.js | Supabase client initialization | `src/modules/supabase.js` |
-| theme.js | Dark/light theme switching | `src/modules/theme.js` |
+| Main Orchestrator | Event bindings, initialization, handler coordination | `src/main.js` |
+| State Store | Mutable globals (ATIVOS, prices, quantities), localStorage sync, Supabase upsert/load | `src/modules/state.js` |
+| UI Rendering | DOM updates, table rows, summary cards, modals, sorting arrows | `src/modules/ui.js` |
+| Business Logic | Portfolio math (target qty, totals), formatting (BRL, percent) | `src/modules/logic.js` |
+| API Client | brapi.dev fetch with rate limiting (250ms delay), ticker validation | `src/modules/api.js` |
+| Authentication | Supabase auth UI, sign-in/up/out, password reset flow | `src/modules/auth.js` |
+| Supabase Client | Single client instantiation with env vars | `src/modules/supabase.js` |
+| Theme | CSS custom property toggle (dark/light), persisted to localStorage | `src/modules/theme.js` |
 
 ## Pattern Overview
 
-**Overall:** Modular Vanilla JavaScript SPA
+**Overall:** Module-based Vanilla JS SPA (no framework)
 
 **Key Characteristics:**
-- Single HTML page with ES6 modules
-- Event-driven architecture with callback objects
-- Dual persistence: localStorage (default) + Supabase (cloud sync)
-- External API integration for real-time stock prices
+- Single HTML page (`index.html`) with ES module `<script type="module">`
+- Shared mutable module-level state exported from `state.js`
+- UI rendered imperatively via DOM manipulation (no virtual DOM)
+- No build-time routing; all views live in the single HTML file
+- Vite dev server for development, outputs to `dist/`
+- CSS custom properties for theming (dark/light)
 
 ## Layers
 
 **UI Layer:**
-- Purpose: Render tables, handle user interactions
-- Location: `src/modules/ui.js`, `index.html`
-- Contains: DOM manipulation functions, table rendering, event binding
-- Depends on: state.js, logic.js
-- Used by: main.js
+- Purpose: HTML structure and visual styling
+- Location: `index.html`, `src/styles/main.css`
+- Contains: Semantic HTML layout, CSS variables (theme tokens), component classes, responsive breakpoints
+- Depends on: No JS modules directly (CSS only)
+- Used by: All other layers
 
-**Business Logic Layer:**
-- Purpose: Portfolio calculations, target quantities
-- Location: `src/modules/logic.js`
-- Contains: `getTotalPortfolio()`, `calcTargetQuantities()`, formatters
-- Depends on: state.js
-- Used by: main.js, ui.js
+**Presentation Layer (ui.js):**
+- Purpose: Build DOM fragments, attach event listeners to rendered rows, update summary cards
+- Location: `src/modules/ui.js`
+- Contains: `renderRow()`, `renderTables()`, `updateSummary()`, `setStatus()`
+- Depends on: `state.js` (reads), `logic.js` (utility functions)
+- Used by: `main.js` (called after any state mutation)
 
-**Data Layer:**
-- Purpose: State management, persistence
+**Application Layer (main.js):**
+- Purpose: Bootstrap, event handler definitions, coordinate rendering calls
+- Location: `src/main.js`
+- Contains: `init()`, `handleRefresh()`, `handleCalc()`, `handleAddAsset()`, etc., callback object (`uiCallbacks`)
+- Depends on: All other modules
+- Used by: `index.html` (entry point script)
+
+**State Layer (state.js):**
+- Purpose: Central mutable store, persistence, cloud sync
 - Location: `src/modules/state.js`
-- Contains: ATIVOS array, quantities, prices, localStorage sync, Supabase sync
-- Used by: main.js, logic.js, ui.js
+- Contains: `ATIVOS[]`, `prices{}`, `quantities{}`, `targetQuantities{}`, CRUD functions, localStorage read/write, Supabase upsert
+- Depends on: `supabase.js`
+- Used by: All modules that read/write data
 
-**Infrastructure Layer:**
-- Purpose: External integrations
-- Location: `src/modules/api.js` (BrAPI), `src/modules/auth.js` (Supabase Auth), `src/modules/supabase.js`, `src/modules/theme.js`
-- Contains: API clients, auth handlers, theme manager
+**Logic Layer (logic.js):**
+- Purpose: Pure calculations, no side effects, no DOM
+- Location: `src/modules/logic.js`
+- Contains: `getValorAtivo()`, `getTotalPortfolio()`, `calcTargetQuantities()`, `fmtBRL()`, `fmtPct()`
+- Depends on: `state.js` (imports quantities, prices, targetQuantities)
+- Used by: `ui.js`, `main.js`
+
+**Integration Layer:**
+- Purpose: External service communication
+- Location: `src/modules/api.js`, `src/modules/auth.js`, `src/modules/supabase.js`
+- Contains: brapi.dev fetch, Supabase auth wrapper + client
+- Depends on: `state.js` (for apiToken, prices), `supabase.js`
+- Used by: `main.js`
 
 ## Data Flow
 
-### Primary Request Path
+### Primary Request Path (Price Refresh)
 
-1. **User Action** → Event handler in `main.js` (`src/main.js:55`)
-2. **API Call** → `api.js` fetches prices from BrAPI (`src/modules/api.js:5`)
-3. **State Update** → Updates `prices` object in `state.js` (`src/modules/state.js`)
-4. **Calculation** → `logic.js` computes targets (`src/modules/logic.js:15`)
-5. **Render** → `ui.js` redraws tables (`src/modules/ui.js:143`)
+1. **User clicks "atualizar preços"** — `handleRefresh()` in `src/main.js:55`
+2. **`fetchPrices(ATIVOS)`** — iterates assets, calls brapi.dev with AbortController timeout (`src/modules/api.js:5`)
+3. **Price stored in `prices{}`** — `state.js` is mutated (via import reference)
+4. **`saveState()` called** — writes all state to localStorage, calls `saveToSupabase()` if logged in (`src/modules/state.js:73`)
+5. **`renderTables(uiCallbacks)`** — rebuilds table rows with updated prices (`src/modules/ui.js:143`)
+6. **`updateSummary()`** — recalculates portfolio total and allocation percentages (`src/modules/ui.js:25`)
 
-### Cloud Sync Flow
+### Aporte Calculation Flow
 
-1. **Auth Change** → `auth.js` triggers callback (`src/modules/auth.js:193`)
-2. **Sync from Cloud** → `state.js` fetches from Supabase (`src/modules/state.js:89`)
-3. **Update State** → Merges remote data to ATIVOS/quantities
-4. **Save to Local** → Persists to localStorage + syncs back to cloud
+1. User enters value in `#aporteValor` input and clicks "Calcular Aporte"
+2. `handleCalc()` in `src/main.js:88` reads input value
+3. `calcTargetQuantities(ATIVOS, aporte)` in `src/modules/logic.js:15` calculates ideal share counts
+4. Results merged into `targetQuantities` object (mutated module state)
+5. `renderTables(uiCallbacks)` updates `#target-{ticker}` cells and delta columns
 
-**State Management:**
-- In-memory: `ATIVOS`, `quantities`, `prices` (module-level exports in `state.js`)
-- Persistence: `localStorage` (primary), `Supabase` (optional, auth-required)
+### Authentication Flow
+
+1. User clicks "Entrar" → `setupAuthUI()` opens modal (`src/modules/auth.js:45`)
+2. Form submit → `signIn()` or `signUp()` calls Supabase
+3. `onAuthStateChange` listener triggers `syncFromSupabase()` if authenticated (`src/modules/state.js:89`)
+4. Remote data overwrites `ATIVOS` and `quantities`, then re-renders
+
+### State Persistence Flow
+
+```
+loadState()
+  └─ localStorage → module globals (ATIVOS, quantities, prices, etc.)
+
+saveState()
+  └─ module globals → localStorage
+  └─ saveToSupabase()
+        └─ upsert to user_assets table (if session exists)
+```
 
 ## Key Abstractions
 
-**ATIVOS Array:**
-- Purpose: Represents user's portfolio assets
-- Structure: `{ ticker, setor, cat, peso }`
-- Pattern: Mutable array exported from state module
+**ATIVOS Asset Record:**
+```js
+{ ticker: string, setor: string, cat: 'div'|'cres', peso: number }
+```
+- Examples: `src/modules/state.js:4-32` (DEFAULT_ATIVOS)
+- Represents a single portfolio holding with its target weight and category
 
-**uiCallbacks Object:**
-- Purpose: Bridge between UI events and state mutations
-- Structure: `{ onQtyChange, onQtyAdj, onWeightChange, onWeightAdj, onRemove }`
-- Pattern: Callback object passed through render chain
+**UI Callback Object:**
+```js
+{ onQtyChange, onQtyAdj, onWeightChange, onWeightAdj, onRemove }
+```
+- Passed from `main.js` to `renderTables()` to decouple event handling from rendering
+- Defined at `src/main.js:15-52`
 
-**Dual Storage:**
-- Local: `localStorage` - Immediate persistence, offline-capable
-- Cloud: `Supabase` - Cross-device sync, requires authentication
+**Supabase Client Singleton:**
+```js
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+```
+- Single instance created at `src/modules/supabase.js:7`
+- Import and use in `state.js` and `auth.js`
 
 ## Entry Points
 
-**HTML Entry Point:**
-- Location: `index.html`
-- Triggers: Browser loads page, executes `src/main.js` as ES6 module
-- Responsibilities: Layout, modals, table structures
+**Primary Entry Point:**
+- Location: `index.html:274` → `<script type="module" src="./src/main.js">`
+- Triggers: Page load, user interactions
+- Responsibilities: Bootstraps theme, loads state, binds all DOM events, starts auto-refresh if cache is stale
 
-**JavaScript Entry Point:**
-- Location: `src/main.js`
-- Triggers: Module import from index.html
-- Responsibilities: Initialize app, bind event handlers, load state, auto-fetch prices
+**Asset Table Entry Points:**
+- `renderRow()` — called per asset from `renderTables()` (`src/modules/ui.js:69`)
+- `renderTables()` — rebuilds both tables on every state change (`src/modules/ui.js:143`)
 
 ## Architectural Constraints
 
-- **Threading:** Single-threaded JavaScript (browser)
-- **Global state:** Module-level exports in `state.js` (`ATIVOS`, `quantities`, `prices`)
-- **Circular imports:** None detected (modules import from state.js, no cross-dependencies)
-- **No build step required:** Vite for dev only; runs as plain ES6 modules in browser
+- **Threading:** Single-threaded browser JS; all async via Promises/fetch
+- **Global state:** Module-level mutable globals in `state.js` (`ATIVOS`, `prices`, `quantities`, etc.) — no encapsulation or reactive system
+- **Circular imports:** None detected — import graph is acyclic
+- **No framework:** Vanilla JS; no virtual DOM; full re-render on any state change
+- **API rate limiting:** 250ms delay between price fetches (`src/modules/api.js:29`); 15-min cache check before refresh (`src/main.js:56-64`)
 
 ## Anti-Patterns
 
-### Hardcoded API Token
+### Mutable Shared State Without Observers
 
-**What happens:** Token stored in state.js source code (`src/modules/state.js:41`)
-```javascript
-export let apiToken = '97aSjyCWDW3pXz8WqXTz9g';
-```
-**Why it's wrong:** Exposes API token in version control
-**Do this instead:** Store only in localStorage, prompt user on first use
+**What happens:** `ATIVOS`, `prices`, `quantities` are exported module-level variables mutated directly. Any code can `push()` or `delete` properties.
+**Why it's wrong:** No reactive updates — callers must manually call `saveState()`, `renderTables()`, and `updateSummary()` after every mutation. Easy to forget a step and get stale UI.
+**Do this instead:** Encapsulate state behind getter/setter functions that trigger re-renders, or use a reactive store pattern.
 
-### Single Main File
+### Hardcoded API Token in Source
 
-**What happens:** All event handlers in one 285-line file (`src/main.js`)
-**Why it's wrong:** Hard to maintain as app grows
-**Do this instead:** Extract handlers into separate module files
+**What happens:** `apiToken` initialized with a literal string (`src/modules/state.js:41`).
+**Why it's wrong:** Token is committed to git and visible in client-side JS.
+**Do this instead:** Require the token to be set via the UI settings modal before use; initialize `apiToken` to empty string.
+
+### Full Table Rebuild on Every Render
+
+**What happens:** `renderTables()` clears both `<tbody>` elements and recreates all `<tr>` elements from scratch (`src/modules/ui.js:148-149`).
+**Why it's wrong:** No DOM reuse; destroys scroll position, focus, and input state; scales poorly with many assets.
+**Do this instead:** Use a virtual DOM or diff-based update (e.g., inject HTML once, update only changed cells).
 
 ## Error Handling
 
-**Strategy:** Try-catch with user-facing alerts, console.warn for silent failures
+**Strategy:** Try/catch with user-facing alerts and status messages
 
 **Patterns:**
-- API failures: Silent skip with warning, continue processing next asset
-- Auth errors: Display user-friendly message in modal
-- Validation: Alert with specific error message
-- Storage errors: Try-catch wraps localStorage operations
+- API errors: logged with `console.warn`, UI shows "erro ao buscar preços" via `setStatus('err', ...)` (`src/modules/api.js:33`)
+- Validation errors: `alert()` dialogs (`src/main.js:193`)
+- Auth errors: displayed in modal error div with localized messages (`src/modules/auth.js:151-158`)
+- Import/export errors: `console.error` + `alert()` on failure
 
 ## Cross-Cutting Concerns
 
-**Logging:** `console.error()` for errors, `console.warn()` for warnings
-**Validation:** Ticker validation via API call before adding
-**Authentication:** Supabase Auth with email/password, password recovery flow
+**Logging:** `console.error` for errors, `console.warn` for non-critical failures (API timeouts). No structured logging library.
+
+**Validation:** Ticker validation via brapi.dev API call before adding asset (`src/main.js:191`). Quantity parsed with `parseInt() || 0`.
+
+**Authentication:** Supabase Auth (email/password). `onAuthStateChange` listener drives UI updates. Cloud sync occurs on sign-in and on every `saveState()`.
 
 ---
 
