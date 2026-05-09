@@ -31,15 +31,16 @@ export function updateSummary() {
 
   document.getElementById('sumTotal').textContent = fmtBRL(total);
   document.getElementById('sumAtivos').textContent = comPosicao + ' ativo' + (comPosicao!==1?'s':'') + ' com posição';
-  document.getElementById('currentSumText').textContent = somaPesos.toFixed(0) + '%';
-  
-  const warn = document.getElementById('sumWarning');
-  warn.style.display = (Math.abs(somaPesos - 100) > 0.1) ? 'block' : 'none';
-  
+
   const divCount = ATIVOS.filter(a => a.cat === 'div').length;
   const cresCount = ATIVOS.filter(a => a.cat === 'cres').length;
-  document.getElementById('countDiv').textContent = `${divCount} ativos · meta 66%`;
-  document.getElementById('countCres').textContent = `${cresCount} ativos · meta 34%`;
+  const divSum = ATIVOS.filter(a => a.cat === 'div').reduce((s,a) => s + a.peso, 0);
+  const cresSum = ATIVOS.filter(a => a.cat === 'cres').reduce((s,a) => s + a.peso, 0);
+  const totalSum = divSum + cresSum;
+  
+  const warnIcon = Math.abs(totalSum - 100) > 0.1 ? ' ⚠' : '';
+  document.getElementById('countDiv').textContent = `${divCount} ativos · ${divSum.toFixed(0)}%${warnIcon}`;
+  document.getElementById('countCres').textContent = `${cresCount} ativos · ${cresSum.toFixed(0)}%${warnIcon}`;
 
   if (total > 0) {
     const pDiv = divTotal / total * 100;

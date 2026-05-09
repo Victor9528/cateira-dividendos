@@ -3,7 +3,8 @@
 import { 
   ATIVOS, quantities, apiToken, loadState, saveState, updateApiToken, 
   addAsset, removeAsset, targetQuantities, lastPriceFetch, updateSort,
-  syncFromSupabase, clearLocalState, exportPortfolio, importPortfolio, hardReset, restoreDefaults
+  syncFromSupabase, clearLocalState, exportPortfolio, importPortfolio, hardReset, restoreDefaults,
+  applyAllocationSplit
 } from './modules/state.js';
 import { fetchPrices, validateTicker } from './modules/api.js';
 import { calcTargetQuantities, fmtBRL } from './modules/logic.js';
@@ -209,6 +210,39 @@ async function onAssetFormSubmit(e) {
   }
 }
 
+// --- Split Modal Handlers ---
+function handleOpenSplit() {
+  const divAssets = ATIVOS.filter(a => a.cat === 'div');
+  const totalDiv = divAssets.reduce((s, a) => s + a.peso, 0);
+  document.getElementById('splitDivInput').value = Math.round(totalDiv);
+  document.getElementById('splitCresInput').value = 100 - Math.round(totalDiv);
+  document.getElementById('splitError').style.display = 'none';
+  document.getElementById('splitModal').style.display = 'flex';
+}
+
+function handleSplitChange() {
+  const divVal = parseFloat(document.getElementById('splitDivInput').value) || 0;
+  document.getElementById('splitCresInput').value = 100 - divVal;
+}
+
+function handleApplySplit() {
+  const divVal = parseFloat(document.getElementById('splitDivInput').value) || 0;
+  const errorEl = document.getElementById('splitError');
+  
+  if (divVal <= 0 || divVal >= 100) {
+    errorEl.textContent = 'Digite um valor entre 1 e 99.';
+    errorEl.style.display = 'block';
+    return;
+  }
+  
+  const success = applyAllocationSplit(divVal);
+  if (success) {
+    document.getElementById('splitModal').style.display = 'none';
+    renderTables(uiCallbacks);
+    updateSummary();
+  }
+}
+
 // --- Initialization ---
 function init() {
   initTheme();
@@ -229,6 +263,12 @@ function init() {
   document.getElementById('btnHardReset').onclick = handleHardReset;
   document.getElementById('btnRestoreDefaults').onclick = handleRestoreDefaults;
 
+  // Split Modal
+  document.getElementById('btnSplit').onclick = handleOpenSplit;
+  document.getElementById('closeSplit').onclick = () => document.getElementById('splitModal').style.display = 'none';
+  document.getElementById('splitDivInput').oninput = handleSplitChange;
+  document.getElementById('btnApplySplit').onclick = handleApplySplit;
+
   document.getElementById('btnAddDiv').onclick = () => handleAddAsset('div');
   document.getElementById('btnAddCres').onclick = () => handleAddAsset('cres');
   document.getElementById('closeAssetModal').onclick = () => document.getElementById('assetModal').style.display = 'none';
@@ -236,7 +276,7 @@ function init() {
 
   // Centralized Modal Closing (outside click)
   window.addEventListener('click', (e) => {
-    const modals = ['authModal', 'settingsModal', 'assetModal', 'updatePwdModal'];
+    const modals = ['authModal', 'settingsModal', 'assetModal', 'updatePwdModal', 'splitModal'];
     modals.forEach(id => {
       const el = document.getElementById(id);
       if (e.target === el) el.style.display = 'none';

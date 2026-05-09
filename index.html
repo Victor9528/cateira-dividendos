@@ -36,10 +36,6 @@
       </div>
     </div>
 
-    <div class="sum-warning" id="sumWarning" style="display: none;">
-      ⚠️ A soma dos pesos-alvo é <span id="currentSumText">0%</span>. Ajuste para 100% para um reequilíbrio preciso.
-    </div>
-
     <!-- Summary -->
     <div class="summary">
       <div class="card" id="sumTotalCard">
@@ -80,7 +76,10 @@
     <div class="alloc-section">
       <div class="alloc-header">
         <span class="alloc-label">ALOCAÇÃO ATUAL</span>
-        <span class="alloc-label" id="allocText">— / —</span>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span class="alloc-label" id="allocText">— / —</span>
+          <button class="btn-icon" id="btnSplit" aria-label="Ajustar split">⚖</button>
+        </div>
       </div>
       <div class="alloc-bar-wrap">
         <div class="alloc-div-fill" id="allocDivBar" style="width:0%"></div>
@@ -268,6 +267,29 @@
           <button type="submit" class="btn-green btn-full">Adicionar à Carteira</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- Split Modal -->
+  <div id="splitModal" class="modal-overlay" style="display: none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <span class="modal-title">Ajustar Meta de Alocação</span>
+        <button id="closeSplit" class="btn-remove" aria-label="Fechar modal">×</button>
+      </div>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:20px;">Defina a distribuição entre Dividendos e Crescimento para recalcular os pesos-alvo de todos os ativos.</p>
+      <div class="input-group">
+        <label>Dividendos (%)</label>
+        <input type="number" id="splitDivInput" min="0" max="100" value="66">
+      </div>
+      <div class="input-group">
+        <label>Crescimento (%)</label>
+        <input type="number" id="splitCresInput" min="0" max="100" value="34" readonly style="opacity:0.6;background:var(--surface);">
+      </div>
+      <div id="splitError" class="auth-error"></div>
+      <div class="modal-actions">
+        <button class="btn-green btn-full" id="btnApplySplit">Aplicar</button>
+      </div>
     </div>
   </div>
 

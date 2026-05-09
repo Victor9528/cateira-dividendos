@@ -257,3 +257,20 @@ export function updateSort(key) {
   }
   saveState();
 }
+
+export function applyAllocationSplit(pctDiv) {
+  const pctCres = 100 - pctDiv;
+  const divAssets = ATIVOS.filter(a => a.cat === 'div');
+  const cresAssets = ATIVOS.filter(a => a.cat === 'cres');
+  
+  if (divAssets.length === 0 || cresAssets.length === 0) return false;
+  
+  const pesoPorDiv = pctDiv / divAssets.length;
+  const pesoPorCres = pctCres / cresAssets.length;
+  
+  divAssets.forEach(a => { a.peso = Math.round(pesoPorDiv * 10) / 10; });
+  cresAssets.forEach(a => { a.peso = Math.round(pesoPorCres * 10) / 10; });
+  
+  saveState();
+  return true;
+}
