@@ -75,6 +75,7 @@ body {
 .topbar-right { display: flex; align-items: center; gap: 12px; }
 .topbar-divider { width: 1px; height: 24px; background: var(--border); margin: 0 10px; }
 .aporte-input-wrap { margin-right: 12px; }
+.valor-input-wrap { position: relative; margin-right: 12px; }
 .aporte-input-sm { width: 160px; font-size: 13px; padding: 6px 10px 6px 30px; }
 .user-profile { display: flex; align-items: center; gap: 10px; }
 .user-email { font-size: 12px; color: var(--muted); font-family: 'DM Mono', monospace; }
@@ -305,6 +306,7 @@ tbody tr:last-child td { border-bottom: none; }
   position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
   font-family: 'DM Mono', monospace; font-size: 14px; color: var(--muted);
 }
+.valor-input-wrap { position: relative; margin-right: 12px; }
 .valor-input {
   background: var(--surface2);
   border: 0.5px solid var(--border2);
