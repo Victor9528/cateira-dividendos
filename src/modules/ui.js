@@ -94,8 +94,12 @@ export function renderRow(a, tbody, callbacks) {
       ${price ? fmtBRL(price).replace('R$ ','') : '<span class="spinner"></span>'}
     </td>
     <td class="td-right">
-      <input type="text" inputmode="numeric" pattern="[0-9]*" class="qty-input" id="qty-${a.ticker}"
-        value="${qty || ''}" placeholder="0">
+      <div class="weight-control">
+        <button class="weight-btn btn-qty-minus">-</button>
+        <input type="text" inputmode="numeric" pattern="[0-9]*" class="qty-input" id="qty-${a.ticker}"
+          value="${qty || ''}" placeholder="0" style="width: 40px;">
+        <button class="weight-btn btn-qty-plus">+</button>
+      </div>
     </td>
     <td class="td-right td-target-qty" id="target-${a.ticker}">${targetQuantities[a.ticker] || '—'}</td>
     <td class="td-right td-delta" style="color: ${(targetQuantities[a.ticker] || 0) - qty > 0 ? 'var(--green)' : ((targetQuantities[a.ticker] || 0) - qty < 0 ? 'var(--red)' : 'var(--muted2)')}">
@@ -126,6 +130,8 @@ export function renderRow(a, tbody, callbacks) {
       e.target.blur();
     }
   };
+  tr.querySelector('.btn-qty-minus').onclick = () => callbacks.onQtyAdj(a.ticker, -1);
+  tr.querySelector('.btn-qty-plus').onclick = () => callbacks.onQtyAdj(a.ticker, 1);
   tr.querySelector('.weight-input').oninput = (e) => callbacks.onWeightChange(a.ticker, e.target.value);
   tr.querySelector('.btn-minus').onclick = () => callbacks.onWeightAdj(a.ticker, -1);
   tr.querySelector('.btn-plus').onclick = () => callbacks.onWeightAdj(a.ticker, 1);

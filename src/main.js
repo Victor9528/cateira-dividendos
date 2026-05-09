@@ -17,6 +17,14 @@ const uiCallbacks = {
     quantities[ticker] = parseInt(val) || 0;
     saveState();
     updateSummary();
+    renderTables(uiCallbacks);
+  },
+  onQtyAdj: (ticker, delta) => {
+    const currentQty = quantities[ticker] || 0;
+    quantities[ticker] = Math.max(0, currentQty + delta);
+    saveState();
+    updateSummary();
+    renderTables(uiCallbacks);
   },
   onWeightChange: (ticker, val) => {
     const a = ATIVOS.find(x => x.ticker === ticker);
