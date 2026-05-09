@@ -5,7 +5,7 @@ import {
   addAsset, removeAsset, targetQuantities, lastPriceFetch, updateSort,
   syncFromSupabase, clearLocalState, exportPortfolio, importPortfolio, hardReset, restoreDefaults
 } from './modules/state.js';
-import { fetchPrices } from './modules/api.js';
+import { fetchPrices, validateTicker } from './modules/api.js';
 import { calcTargetQuantities, fmtBRL } from './modules/logic.js';
 import { renderTables, updateSummary, setStatus } from './modules/ui.js';
 import { setupAuthUI } from './modules/auth.js';
@@ -149,17 +149,56 @@ async function handleRestoreDefaults() {
 }
 
 function handleAddAsset(cat) {
-  const ticker = prompt("Ticker do ativo (ex: PETR4):")?.toUpperCase().trim();
+  const modal = document.getElementById('assetModal');
+  const title = document.getElementById('assetModalTitle');
+  const catInput = document.getElementById('assetCat');
+  
+  catInput.value = cat;
+  title.textContent = `Adicionar Ativo (${cat === 'div' ? 'Dividendos' : 'Crescimento'})`;
+  modal.style.display = 'flex';
+  
+  // Clear fields
+  document.getElementById('assetTicker').value = '';
+  document.getElementById('assetSetor').value = 'Outros';
+  document.getElementById('assetPeso').value = '4';
+}
+
+async function onAssetFormSubmit(e) {
+  e.preventDefault();
+  const ticker = document.getElementById('assetTicker').value.toUpperCase().trim();
+  const setor = document.getElementById('assetSetor').value;
+  const cat = document.getElementById('assetCat').value;
+  const peso = parseFloat(document.getElementById('assetPeso').value) || 0;
+  
   if (!ticker) return;
-  if (ATIVOS.find(a => a.ticker === ticker)) return alert("Ativo já existe!");
+  if (ATIVOS.find(a => a.ticker === ticker)) return alert("Ativo já existe na carteira!");
+
+  const btn = document.getElementById('assetForm').querySelector('button[type="submit"]');
+  const originalText = btn.textContent;
   
-  const setor = prompt("Setor ou tipo (ex: Petróleo, FII Logística):", "Outros");
-  const peso = parseFloat(prompt("Peso alvo (%):", "4")) || 0;
-  
-  addAsset({ ticker, setor, cat, peso });
-  renderTables(uiCallbacks);
-  updateSummary();
-  handleRefresh(true);
+  try {
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Validando...';
+    
+    const isValid = await validateTicker(ticker);
+    if (!isValid) {
+      alert(`O ticker "${ticker}" não foi encontrado na B3 ou é inválido.`);
+      return;
+    }
+    
+    addAsset({ ticker, setor, cat, peso });
+    document.getElementById('assetModal').style.display = 'none';
+    
+    renderTables(uiCallbacks);
+    updateSummary();
+    handleRefresh(true);
+  } catch (err) {
+    console.error(err);
+    alert("Erro ao validar ticker.");
+  } finally {
+    btn.disabled = false;
+    btn.textContent = originalText;
+  }
 }
 
 // --- Initialization ---
@@ -184,6 +223,17 @@ function init() {
 
   document.getElementById('btnAddDiv').onclick = () => handleAddAsset('div');
   document.getElementById('btnAddCres').onclick = () => handleAddAsset('cres');
+  document.getElementById('closeAssetModal').onclick = () => document.getElementById('assetModal').style.display = 'none';
+  document.getElementById('assetForm').onsubmit = onAssetFormSubmit;
+
+  // Centralized Modal Closing (outside click)
+  window.addEventListener('click', (e) => {
+    const modals = ['authModal', 'settingsModal', 'assetModal', 'updatePwdModal'];
+    modals.forEach(id => {
+      const el = document.getElementById(id);
+      if (e.target === el) el.style.display = 'none';
+    });
+  });
 
   // Supabase Auth Setup
   setupAuthUI(async (user, event) => {

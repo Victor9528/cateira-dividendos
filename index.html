@@ -217,6 +217,60 @@
     </div>
   </div>
 
+  <!-- Asset Modal -->
+  <div id="assetModal" class="modal-overlay" style="display: none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <span class="modal-title" id="assetModalTitle">Adicionar Ativo</span>
+        <button id="closeAssetModal" class="btn-remove">×</button>
+      </div>
+      <form id="assetForm">
+        <input type="hidden" id="assetCat">
+        <div class="input-group">
+          <label>Ticker (ex: PETR4)</label>
+          <input type="text" id="assetTicker" required placeholder="TICKER" style="text-transform: uppercase;">
+        </div>
+        <div class="input-group">
+          <label>Setor</label>
+          <select id="assetSetor" required>
+            <option value="Bancos">Bancos</option>
+            <option value="Seguros">Seguros</option>
+            <option value="Energia elétrica">Energia elétrica</option>
+            <option value="Holding financeira">Holding financeira</option>
+            <option value="Saneamento">Saneamento</option>
+            <option value="Telecom">Telecom</option>
+            <option value="Mineração">Mineração</option>
+            <option value="Siderurgia">Siderurgia</option>
+            <option value="Petróleo">Petróleo</option>
+            <option value="Agro">Agro</option>
+            <option value="Bebidas">Bebidas</option>
+            <option value="Saúde">Saúde</option>
+            <option value="Educação">Educação</option>
+            <option value="Varejo">Varejo</option>
+            <option value="Shoppings">Shoppings</option>
+            <option value="Construção civil">Construção civil</option>
+            <option value="Indústria">Indústria</option>
+            <option value="Papel e celulose">Papel e celulose</option>
+            <option value="Logística">Logística</option>
+            <option value="FII Logística">FII Logística</option>
+            <option value="FII Renda Urbana">FII Renda Urbana</option>
+            <option value="FII Shoppings">FII Shoppings</option>
+            <option value="FII Híbrido">FII Híbrido</option>
+            <option value="FII Papel">FII Papel</option>
+            <option value="Outros" selected>Outros</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <label>Peso Alvo (%)</label>
+          <input type="number" id="assetPeso" step="0.1" required value="4">
+        </div>
+        <div class="modal-actions">
+          <button type="submit" class="btn-green" style="width: 100%;">Adicionar à Carteira</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <script type="module" src="./src/main.js"></script>
 </body>
 </html>

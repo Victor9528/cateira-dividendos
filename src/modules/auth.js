@@ -80,12 +80,6 @@ export function setupAuthUI(onAuthChange) {
   
   if (closeBtn) closeBtn.onclick = () => modal.style.display = 'none';
   
-  // Close on outside click
-  window.onclick = (event) => {
-    if (event.target === modal) modal.style.display = 'none';
-    if (event.target === updatePwdModal) updatePwdModal.style.display = 'none';
-  };
-
   if (btnForgotPwd) {
     btnForgotPwd.onclick = async () => {
       const email = authForm.email.value;

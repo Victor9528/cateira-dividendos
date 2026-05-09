@@ -38,3 +38,24 @@ export async function fetchPrices(assets, onUpdate) {
     updateLastPriceFetch();
   }
 }
+
+export async function validateTicker(ticker) {
+  try {
+    let url = `https://brapi.dev/api/quote/${ticker}?fundamental=false`;
+    if (apiToken) url += `&token=${apiToken}`;
+    
+    const resp = await fetch(url);
+    if (!resp.ok) return false;
+    
+    const data = await resp.json();
+    if (data.results && data.results[0] && !data.results[0].error) {
+      // Also cache the price immediately to save an API call
+      prices[ticker] = data.results[0].regularMarketPrice;
+      return true;
+    }
+    return false;
+  } catch(e) {
+    console.error("Erro ao validar ticker:", e);
+    return false; // Assume invalid on error to be safe, or we could throw. 
+  }
+}
