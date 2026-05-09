@@ -118,7 +118,7 @@ export function renderRow(a, tbody, callbacks) {
       <div class="mini-bar-wrap"><div class="mini-bar-fill" style="width:${barPct}%;background:${barColor}"></div></div>
     </td>
     <td class="td-right">
-      <button class="btn-remove" title="Excluir">×</button>
+      <button class="btn-remove" title="Excluir ${a.ticker}" aria-label="Excluir ${a.ticker}">×</button>
     </td>
   `;
 
@@ -193,4 +193,12 @@ export function renderTables(callbacks) {
     if (a.cat === 'div') renderRow(a, divBody, callbacks);
     else renderRow(a, cresBody, callbacks);
   });
+
+  // Empty state messaging
+  if (divBody.children.length === 0) {
+    divBody.innerHTML = `<tr><td colspan="10" class="empty-state">Nenhum ativo cadastrado · <button class="btn-link" onclick="document.getElementById('btnAddDiv').click()">+ adicionar</button></td></tr>`;
+  }
+  if (cresBody.children.length === 0) {
+    cresBody.innerHTML = `<tr><td colspan="10" class="empty-state">Nenhum ativo cadastrado · <button class="btn-link" onclick="document.getElementById('btnAddCres').click()">+ adicionar</button></td></tr>`;
+  }
 }

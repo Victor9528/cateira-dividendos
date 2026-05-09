@@ -12,26 +12,26 @@
     <div class="topbar">
       <div class="logo">portfólio/<span>B3</span></div>
       <div class="topbar-right">
-        <div class="valor-input-wrap" style="margin-right: 12px;">
+        <div class="valor-input-wrap aporte-input-wrap">
           <span class="valor-prefix">R$</span>
-          <input type="number" class="valor-input" id="aporteValor" placeholder="Valor do aporte" style="width: 160px; font-size: 13px; padding: 6px 10px 6px 30px;">
+          <input type="number" class="valor-input aporte-input-sm" id="aporteValor" placeholder="Valor do aporte">
         </div>
         <button class="btn-green" id="btnCalc">Calcular Aporte</button>
         
-        <div style="width: 1px; height: 24px; background: var(--border); margin: 0 10px;"></div>
+        <div class="topbar-divider"></div>
 
-        <button class="btn" id="btnTheme" title="Alternar tema">☀️</button>
-        <button class="btn" id="btnConfig" title="Configurações">⚙️</button>
+        <button class="btn" id="btnTheme" aria-label="Alternar tema" title="Alternar tema">☀️</button>
+        <button class="btn" id="btnConfig" aria-label="Abrir configurações" title="Configurações">⚙️</button>
         <button class="btn" id="btnRefresh">
           <span id="refreshIcon">↻</span> atualizar preços
         </button>
 
-        <div style="width: 1px; height: 24px; background: var(--border); margin: 0 10px;"></div>
+        <div class="topbar-divider"></div>
 
-        <div id="userProfile" style="display: flex; align-items: center; gap: 10px;">
-          <span id="userEmail" style="font-size: 12px; color: var(--muted); font-family: 'DM Mono', monospace;"></span>
+        <div id="userProfile" class="user-profile">
+          <span id="userEmail" class="user-email"></span>
           <button class="btn" id="btnLogin">Entrar</button>
-          <button class="btn" id="btnLogout" style="display: none; color: var(--red);">Sair</button>
+          <button class="btn logout-btn" id="btnLogout">Sair</button>
         </div>
       </div>
     </div>
@@ -69,7 +69,7 @@
       </div>
       <div class="card">
         <div class="card-label">STATUS PREÇOS</div>
-        <div class="card-value" style="font-size:13px;padding-top:4px;" id="sumStatus">
+        <div class="card-value status-value-sm" id="sumStatus">
           <span class="status-dot status-load"></span>carregando
         </div>
         <div class="card-sub" id="sumStatusSub">aguarde...</div>
@@ -87,8 +87,8 @@
         <div class="alloc-cres-fill" id="allocCresBar" style="width:0%"></div>
       </div>
       <div class="alloc-legend">
-        <div class="alloc-leg-item"><div class="leg-dot" style="background:var(--green)"></div>Dividendos (meta 66%)</div>
-        <div class="alloc-leg-item"><div class="leg-dot" style="background:var(--blue)"></div>Crescimento (meta 34%)</div>
+        <div class="alloc-leg-item"><div class="leg-dot legend-dot-green"></div>Dividendos (meta 66%)</div>
+        <div class="alloc-leg-item"><div class="leg-dot legend-dot-blue"></div>Crescimento (meta 34%)</div>
       </div>
     </div>
 
@@ -111,7 +111,7 @@
             <th class="right th-valor" data-sort="valor">Valor</th>
             <th class="right" data-sort="peso">Alvo</th>
             <th class="right">Atual</th>
-            <th class="right" style="width: 40px;"></th>
+            <th class="right col-empty"></th>
           </tr>
         </thead>
         <tbody id="tbodyDiv"></tbody>
@@ -139,7 +139,7 @@
             <th class="right th-valor" data-sort="valor">Valor</th>
             <th class="right" data-sort="peso">Alvo</th>
             <th class="right">Atual</th>
-            <th class="right" style="width: 40px;"></th>
+            <th class="right col-empty"></th>
           </tr>
         </thead>
         <tbody id="tbodyCres"></tbody>
@@ -152,7 +152,7 @@
     <div class="modal-card">
       <div class="modal-header">
         <span class="modal-title">Acesse sua conta</span>
-        <button id="closeModal" class="btn-remove">×</button>
+        <button id="closeModal" class="btn-remove" aria-label="Fechar modal">×</button>
       </div>
       <form id="authForm">
         <div class="input-group">
@@ -160,14 +160,14 @@
           <input type="email" name="email" required placeholder="seu@email.com">
         </div>
         <div class="input-group">
-          <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px;">
-            <label style="margin-bottom: 0;">Senha</label>
-            <button type="button" id="btnForgotPwd" style="background:none; border:none; color:var(--green); font-size:11px; cursor:pointer; font-family:'DM Mono', monospace;">Esqueceu a senha?</button>
+          <div class="password-field-row">
+            <label class="modal-label-sm">Senha</label>
+            <button type="button" id="btnForgotPwd" class="forgot-pwd-btn">Esqueceu a senha?</button>
           </div>
           <input type="password" name="password" required placeholder="••••••••">
         </div>
-        <div id="authError" style="font-size: 11px; margin: -8px 0 16px; display: none; font-family: 'DM Mono', monospace;"></div>
-        <div class="modal-actions">
+        <div id="authError" class="auth-error"></div>
+        <div class="modal-actions btn-full">
           <button type="submit" data-mode="login" class="btn-green" style="flex: 1;">Entrar</button>
           <button type="submit" data-mode="signup" class="btn" style="flex: 1;">Cadastrar</button>
         </div>
@@ -186,7 +186,7 @@
           <label>Nova Senha</label>
           <input type="password" name="newPassword" required placeholder="••••••••" minlength="6">
         </div>
-        <div id="updatePwdError" style="font-size: 11px; margin: -8px 0 16px; display: none; font-family: 'DM Mono', monospace;"></div>
+        <div id="updatePwdError" class="auth-error"></div>
         <div class="modal-actions">
           <button type="submit" class="btn-green" style="width: 100%;">Salvar Nova Senha</button>
         </div>
@@ -199,20 +199,20 @@
     <div class="modal-card">
       <div class="modal-header">
         <span class="modal-title">Configurações</span>
-        <button id="closeSettings" class="btn-remove">×</button>
+        <button id="closeSettings" class="btn-remove" aria-label="Fechar modal">×</button>
       </div>
       <div class="input-group">
         <label>Token BrAPI (brapi.dev)</label>
         <input type="text" id="apiTokenInput" placeholder="Seu token">
-        <button class="btn-green" id="btnSaveToken" style="width: 100%; margin-top: 8px;">Salvar Token</button>
+        <button class="btn-green btn-full-mt8" id="btnSaveToken">Salvar Token</button>
       </div>
-      <hr class="divider" style="margin: 16px 0;">
-      <div class="modal-actions" style="flex-direction: column; gap: 8px;">
-        <button id="btnExport" class="btn" style="width: 100%; text-align: left;">📤 Exportar Portfólio (JSON)</button>
-        <button id="btnImport" class="btn" style="width: 100%; text-align: left;">📥 Importar Portfólio (JSON)</button>
-        <input type="file" id="fileInput" style="display: none;" accept=".json">
-        <button id="btnHardReset" class="btn" style="width: 100%; text-align: left; color: var(--red); border-color: var(--red-dim);">🗑️ Resetar Tudo (CUIDADO)</button>
-        <button id="btnRestoreDefaults" class="btn" style="width: 100%; text-align: left; margin-top: 8px;">🔄 Restaurar Ativos Padrão</button>
+      <hr class="divider divider-mt">
+      <div class="modal-actions modal-actions-col">
+        <button id="btnExport" class="btn btn-full btn-full-mt8">📤 Exportar Portfólio (JSON)</button>
+        <button id="btnImport" class="btn btn-full btn-full-mt8">📥 Importar Portfólio (JSON)</button>
+        <input type="file" id="fileInput" class="file-input-hidden" accept=".json">
+        <button id="btnHardReset" class="btn btn-full btn-full-mt8 danger-btn">🗑️ Resetar Tudo (CUIDADO)</button>
+        <button id="btnRestoreDefaults" class="btn btn-full btn-full-mt8">🔄 Restaurar Ativos Padrão</button>
       </div>
     </div>
   </div>
@@ -222,13 +222,13 @@
     <div class="modal-card">
       <div class="modal-header">
         <span class="modal-title" id="assetModalTitle">Adicionar Ativo</span>
-        <button id="closeAssetModal" class="btn-remove">×</button>
+        <button id="closeAssetModal" class="btn-remove" aria-label="Fechar modal">×</button>
       </div>
       <form id="assetForm">
         <input type="hidden" id="assetCat">
         <div class="input-group">
           <label>Ticker (ex: PETR4)</label>
-          <input type="text" id="assetTicker" required placeholder="TICKER" style="text-transform: uppercase;">
+          <input type="text" id="assetTicker" class="input-upper" required placeholder="TICKER">
         </div>
         <div class="input-group">
           <label>Setor</label>
@@ -265,7 +265,7 @@
           <input type="number" id="assetPeso" step="0.1" required value="4">
         </div>
         <div class="modal-actions">
-          <button type="submit" class="btn-green" style="width: 100%;">Adicionar à Carteira</button>
+          <button type="submit" class="btn-green btn-full">Adicionar à Carteira</button>
         </div>
       </form>
     </div>
