@@ -103,12 +103,12 @@
         <thead>
           <tr>
             <th data-sort="ticker">Ticker</th>
-            <th data-sort="setor">Setor</th>
+            <th class="th-setor" data-sort="setor">Setor</th>
             <th class="right" data-sort="price">Preço</th>
             <th class="right" data-sort="qty">Qtd</th>
-            <th class="right" data-sort="target">Alvo (qtd)</th>
-            <th class="right">Ajuste</th>
-            <th class="right" data-sort="valor">Valor</th>
+            <th class="right th-target-qty" data-sort="target">Alvo (qtd)</th>
+            <th class="right th-ajuste">Ajuste</th>
+            <th class="right th-valor" data-sort="valor">Valor</th>
             <th class="right" data-sort="peso">Alvo</th>
             <th class="right">Atual</th>
             <th class="right" style="width: 40px;"></th>
@@ -131,12 +131,12 @@
         <thead>
           <tr>
             <th data-sort="ticker">Ticker</th>
-            <th data-sort="setor">Setor</th>
+            <th class="th-setor" data-sort="setor">Setor</th>
             <th class="right" data-sort="price">Preço</th>
             <th class="right" data-sort="qty">Qtd</th>
-            <th class="right" data-sort="target">Alvo (qtd)</th>
-            <th class="right">Ajuste</th>
-            <th class="right" data-sort="valor">Valor</th>
+            <th class="right th-target-qty" data-sort="target">Alvo (qtd)</th>
+            <th class="right th-ajuste">Ajuste</th>
+            <th class="right th-valor" data-sort="valor">Valor</th>
             <th class="right" data-sort="peso">Alvo</th>
             <th class="right">Atual</th>
             <th class="right" style="width: 40px;"></th>
@@ -160,13 +160,35 @@
           <input type="email" name="email" required placeholder="seu@email.com">
         </div>
         <div class="input-group">
-          <label>Senha</label>
+          <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px;">
+            <label style="margin-bottom: 0;">Senha</label>
+            <button type="button" id="btnForgotPwd" style="background:none; border:none; color:var(--green); font-size:11px; cursor:pointer; font-family:'DM Mono', monospace;">Esqueceu a senha?</button>
+          </div>
           <input type="password" name="password" required placeholder="••••••••">
         </div>
         <div id="authError" style="font-size: 11px; margin: -8px 0 16px; display: none; font-family: 'DM Mono', monospace;"></div>
         <div class="modal-actions">
           <button type="submit" data-mode="login" class="btn-green" style="flex: 1;">Entrar</button>
           <button type="submit" data-mode="signup" class="btn" style="flex: 1;">Cadastrar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Update Password Modal (shown after recovery email link is clicked) -->
+  <div id="updatePwdModal" class="modal-overlay" style="display: none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <span class="modal-title">Criar Nova Senha</span>
+      </div>
+      <form id="updatePwdForm">
+        <div class="input-group">
+          <label>Nova Senha</label>
+          <input type="password" name="newPassword" required placeholder="••••••••" minlength="6">
+        </div>
+        <div id="updatePwdError" style="font-size: 11px; margin: -8px 0 16px; display: none; font-family: 'DM Mono', monospace;"></div>
+        <div class="modal-actions">
+          <button type="submit" class="btn-green" style="width: 100%;">Salvar Nova Senha</button>
         </div>
       </form>
     </div>

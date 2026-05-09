@@ -149,7 +149,12 @@ export async function saveToSupabase() {
     .from('user_assets')
     .upsert(assetsToUpsert, { onConflict: 'user_id,ticker' });
 
-  if (error) console.error('Error saving to Supabase:', error);
+  if (error) {
+    console.error('Error saving to Supabase:', error);
+    if (error.code === '42501' || error.message?.toLowerCase().includes('policy') || error.message?.toLowerCase().includes('row level security')) {
+      alert("Erro de permissão na nuvem! Você precisa configurar as regras de segurança (RLS) no Supabase. Os dados foram salvos apenas localmente.");
+    }
+  }
 }
 
 export function clearLocalState() {

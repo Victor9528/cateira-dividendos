@@ -346,3 +346,75 @@ tbody tr:last-child td { border-bottom: none; }
 }
 .input-group input:focus { outline: none; border-color: var(--green); }
 .modal-actions { display: flex; gap: 12px; margin-top: 24px; }
+ 
+ /* Mobile Responsiveness */
+ @media (max-width: 900px) {
+   .summary {
+     grid-template-columns: repeat(2, 1fr);
+   }
+ }
+ 
+ @media (max-width: 600px) {
+   .app { padding: 0 16px 40px; }
+   
+   .topbar {
+     flex-direction: column;
+     align-items: flex-start;
+     gap: 16px;
+     padding: 16px 0;
+   }
+   
+   .topbar-right {
+     width: 100%;
+     display: grid;
+     grid-template-columns: repeat(2, 1fr);
+     gap: 10px;
+   }
+   
+   .topbar-right .btn-icon { width: 100%; display: flex; justify-content: center; }
+   #btnRefresh { grid-column: span 2; }
+   #btnAuth { grid-column: span 2; }
+ 
+   .valor-input-wrap, .valor-input {
+     width: 100% !important;
+   }
+ 
+   #btnCalc { width: 100%; order: 2; }
+ 
+   .summary {
+     grid-template-columns: 1fr;
+     gap: 12px;
+   }
+ 
+   .card { padding: 16px; }
+   .card-value { font-size: 18px; }
+ 
+   .alloc-header { flex-direction: column; align-items: flex-start; gap: 4px; }
+   
+   .section-header {
+     flex-direction: column;
+     align-items: flex-start;
+     gap: 8px;
+   }
+ 
+   .table-wrap {
+     margin: 0 -16px 24px;
+     border-radius: 0;
+     border-left: none;
+     border-right: none;
+     padding: 4px;
+   }
+ 
+   /* Hide less critical columns on small screens */
+   .td-setor, .th-setor, 
+   .td-target-qty, .th-target-qty,
+   .td-valor, .th-valor { display: none; }
+   
+   .qty-input { width: 60px; font-size: 12px; }
+   .weight-control { scale: 0.9; transform-origin: right; }
+   
+   .modal-card {
+     margin: 16px;
+     padding: 24px;
+   }
+ }

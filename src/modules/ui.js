@@ -97,11 +97,11 @@ export function renderRow(a, tbody, callbacks) {
       <input type="text" inputmode="numeric" pattern="[0-9]*" class="qty-input" id="qty-${a.ticker}"
         value="${qty || ''}" placeholder="0">
     </td>
-    <td class="td-right" id="target-${a.ticker}">${targetQuantities[a.ticker] || '—'}</td>
+    <td class="td-right td-target-qty" id="target-${a.ticker}">${targetQuantities[a.ticker] || '—'}</td>
     <td class="td-right td-delta" style="color: ${(targetQuantities[a.ticker] || 0) - qty > 0 ? 'var(--green)' : ((targetQuantities[a.ticker] || 0) - qty < 0 ? 'var(--red)' : 'var(--muted2)')}">
       ${(targetQuantities[a.ticker] || 0) - qty > 0 ? '+' : ''}${(targetQuantities[a.ticker] || 0) - qty || '—'}
     </td>
-    <td class="td-right td-valor" id="valor-${a.ticker}">${qty > 0 && price ? fmtBRL(valor) : '—'}</td>
+    <td class="td-right td-valor td-target-value" id="valor-${a.ticker}">${qty > 0 && price ? fmtBRL(valor) : '—'}</td>
     <td class="td-right">
       <div class="weight-control">
         <button class="weight-btn btn-minus">-</button>

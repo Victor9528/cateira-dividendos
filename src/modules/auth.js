@@ -3,6 +3,13 @@ import { supabase } from './supabase.js';
 export async function signUp(email, password) {
   const { data, error } = await supabase.auth.signUp({ email, password });
   if (error) throw error;
+  
+  // Supabase security feature: if user is returned but identities is empty,
+  // it means the email is already taken.
+  if (data?.user && data.user.identities && data.user.identities.length === 0) {
+    throw new Error('user_already_exists');
+  }
+  
   return data;
 }
 
@@ -14,6 +21,18 @@ export async function signIn(email, password) {
 
 export async function signOut() {
   const { error } = await supabase.auth.signOut();
+  if (error) throw error;
+}
+
+export async function resetPassword(email) {
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin,
+  });
+  if (error) throw error;
+}
+
+export async function updatePassword(newPassword) {
+  const { error } = await supabase.auth.updateUser({ password: newPassword });
   if (error) throw error;
 }
 
@@ -31,6 +50,11 @@ export function setupAuthUI(onAuthChange) {
   const logoutBtn = document.getElementById('btnLogout');
   const userEmail = document.getElementById('userEmail');
   const authError = document.getElementById('authError');
+  const btnForgotPwd = document.getElementById('btnForgotPwd');
+  
+  const updatePwdModal = document.getElementById('updatePwdModal');
+  const updatePwdForm = document.getElementById('updatePwdForm');
+  const updatePwdError = document.getElementById('updatePwdError');
 
   const setStatus = (msg, isError = true) => {
     if (!authError) return;
@@ -59,7 +83,52 @@ export function setupAuthUI(onAuthChange) {
   // Close on outside click
   window.onclick = (event) => {
     if (event.target === modal) modal.style.display = 'none';
+    if (event.target === updatePwdModal) updatePwdModal.style.display = 'none';
   };
+
+  if (btnForgotPwd) {
+    btnForgotPwd.onclick = async () => {
+      const email = authForm.email.value;
+      if (!email) {
+        setStatus("Digite seu e-mail acima antes de recuperar a senha.");
+        return;
+      }
+      try {
+        setBusy(true);
+        await resetPassword(email);
+        setStatus("E-mail de recuperação enviado! Verifique sua caixa de entrada.", false);
+      } catch (err) {
+        setStatus(err.message);
+      } finally {
+        setBusy(false);
+      }
+    };
+  }
+
+  if (updatePwdForm) {
+    updatePwdForm.onsubmit = async (e) => {
+      e.preventDefault();
+      const newPwd = e.target.newPassword.value;
+      const btn = updatePwdForm.querySelector('button');
+      
+      try {
+        btn.disabled = true;
+        btn.textContent = "Salvando...";
+        await updatePassword(newPwd);
+        updatePwdModal.style.display = 'none';
+        alert("Senha atualizada com sucesso!");
+      } catch (err) {
+        if (updatePwdError) {
+          updatePwdError.textContent = err.message;
+          updatePwdError.style.display = 'block';
+          updatePwdError.style.color = 'var(--red)';
+        }
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Salvar Nova Senha";
+      }
+    };
+  }
 
   if (authForm) {
     authForm.onsubmit = async (e) => {
@@ -73,8 +142,14 @@ export function setupAuthUI(onAuthChange) {
 
       try {
         if (mode === 'signup') {
-          await signUp(email, password);
-          setStatus('Cadastro realizado! Verifique seu e-mail para confirmar.', false);
+          const res = await signUp(email, password);
+          if (res?.session) {
+             // Confirm email is disabled in Supabase, logged in immediately
+             setStatus('Cadastro realizado com sucesso!', false);
+             setTimeout(() => modal.style.display = 'none', 1500);
+          } else {
+             setStatus('Cadastro realizado! Verifique seu e-mail para confirmar.', false);
+          }
         } else {
           await signIn(email, password);
           modal.style.display = 'none';
@@ -83,6 +158,9 @@ export function setupAuthUI(onAuthChange) {
         let msg = err.message;
         if (msg === 'Invalid login credentials') msg = 'E-mail ou senha incorretos.';
         if (msg === 'Email not confirmed') msg = 'Por favor, confirme seu e-mail antes de entrar.';
+        if (msg === 'user_already_exists' || msg === 'User already registered') msg = 'Este e-mail já está cadastrado.';
+        if (msg.includes('rate limit')) msg = 'Muitas tentativas. Aguarde um momento e tente novamente.';
+        if (msg.includes('Password should be')) msg = 'A senha deve ter pelo menos 6 caracteres.';
         setStatus(msg);
       } finally {
         setBusy(false);
@@ -112,6 +190,12 @@ export function setupAuthUI(onAuthChange) {
       if (logoutBtn) logoutBtn.style.display = 'none';
       if (userEmail) userEmail.textContent = '';
     }
+    
+    if (event === 'PASSWORD_RECOVERY') {
+      if (modal) modal.style.display = 'none';
+      if (updatePwdModal) updatePwdModal.style.display = 'flex';
+    }
+
     if (onAuthChange) onAuthChange(user, event);
   });
 }
