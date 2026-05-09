@@ -4,81 +4,100 @@
 
 ## APIs & External Services
 
-**Financial Data:**
-- brapi.dev - Brazilian stock market price data API
-  - Endpoint: `https://brapi.dev/api/quote/{ticker}?fundamental=false`
-  - SDK/Client: None (uses native browser `fetch` API)
-  - Auth: Optional API token via `token` query parameter
-  - Token storage: `localStorage` key `carteira_token` or hardcoded default in `src/modules/state.js` (line 37)
-  - Usage: `src/modules/api.js` - fetches stock prices sequentially with 100ms delay between requests to avoid rate limiting
-  - Token configuration: UI button (⚙️) triggers prompt for token input
-
-**Fonts:**
-- Google Fonts
-  - URL: `https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap`
-  - Fonts used: DM Mono (weights 400, 500), DM Sans (weights 300, 400, 500)
-  - Implementation: Loaded in `index.html` (line 7)
+**Stock Market Data:**
+- BrAPI (brapi.dev) - Brazilian stock price API
+  - Endpoint: `https://brapi.dev/api/quote/{ticker}`
+  - Used in: `src/modules/api.js`
+  - Auth: Token-based (env var stored in `apiToken` in `src/modules/state.js`)
+  - Features:
+    - Real-time stock quotes from B3 (Brazilian exchange)
+    - Used for: `fetchPrices()` and `validateTicker()` functions
 
 ## Data Storage
 
-**Databases:**
-- None - no server-side database
-
-**Client-side Storage:**
-- Browser `localStorage`
-  - `carteira_qtys` - Asset quantities (object mapping ticker → quantity)
-  - `carteira_buy` - Buy quantities (object mapping ticker → buy quantity)
-  - `carteira_ativos` - Asset list (array of asset objects with ticker, setor, cat, peso)
-  - `carteira_token` - brapi.dev API token
-  - Implementation: `src/modules/state.js` - `loadState()` and `saveState()` functions
+**Database:**
+- Supabase (PostgreSQL)
+  - Client: `@supabase/supabase-js`
+  - Connection: `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` env vars
+  - Table: `user_assets`
+    - Columns: `user_id`, `ticker`, `setor`, `cat`, `peso`, `quantity`
+    - Sync: Bidirectional (local ↔ cloud)
+  - Used in: `src/modules/state.js` (syncFromSupabase, saveToSupabase)
 
 **File Storage:**
-- Local filesystem only (static assets: HTML, CSS, JS)
+- LocalStorage (Browser)
+  - Keys: `carteira_qtys`, `carteira_ativos`, `carteira_token`, `carteira_prices`, `carteira_last_fetch`, `carteira_sort`
+  - Fallback when not logged in
 
 **Caching:**
-- None explicit (browser caches static assets via standard HTTP caching)
+- Browser localStorage for stock prices
+- 15-minute cache for price fetches (checked in `src/main.js`)
+- 24-hour auto-refresh threshold
 
 ## Authentication & Identity
 
 **Auth Provider:**
-- None - no user authentication system
-- API access: Optional token for brapi.dev (public API with rate limiting, token increases limits)
+- Supabase Auth
+  - Implementation: Email/Password authentication
+  - Methods:
+    - Sign up (`signUp`)
+    - Sign in (`signInWithPassword`)
+    - Sign out (`signOut`)
+    - Password reset (`resetPasswordForEmail`)
+    - Password update (`updateUser`)
+  - Used in: `src/modules/auth.js`
+
+**Session Management:**
+- Supabase session handling via `onAuthStateChange`
+- Password recovery flow with redirect to app
 
 ## Monitoring & Observability
 
 **Error Tracking:**
-- None detected
+- None (no external error tracking service)
 
 **Logs:**
-- Browser `console.warn()` and `console.error()` for API errors and state loading/saving errors
-- Implementation: `src/modules/api.js` (line 25), `src/modules/state.js` (lines 56, 67)
+- Console logging (browser console)
+- `console.warn` for API failures
+- `console.error` for critical errors
 
 ## CI/CD & Deployment
 
 **Hosting:**
-- Not configured - static site can be deployed to any static hosting provider
+- Static files - deployable to any static host
+- Options: Vercel, Netlify, GitHub Pages, or any static file server
 
 **CI Pipeline:**
-- None detected
+- None configured
 
 ## Environment Configuration
 
 **Required env vars:**
-- None (all configuration is client-side or in localStorage)
+- `VITE_SUPABASE_URL` - Supabase project URL
+- `VITE_SUPABASE_ANON_KEY` - Supabase anonymous key
 
-**Secrets location:**
-- API token stored in `localStorage` (`carteira_token`) or hardcoded default in `src/modules/state.js` line 37: `'97aSjyCWDW3pXz8WqXTz9g'`
-- Note: Hardcoded API token in source code is a security concern for public repositories
+**Optional:**
+- `apiToken` - BrAPI token (can use without token but limited)
 
 ## Webhooks & Callbacks
 
 **Incoming:**
-- None
+- Supabase Auth callbacks:
+  - `SIGNED_IN` - User logged in → triggers sync
+  - `SIGNED_OUT` - User logged out → clears local state
+  - `INITIAL_SESSION` - Initial session check → sync data
+  - `PASSWORD_RECOVERY` - Password reset flow → shows update modal
 
 **Outgoing:**
-- GET requests to `https://brapi.dev/api/quote/{ticker}` for each asset in portfolio
-- Sequential requests with 100ms delay between each (rate limit avoidance)
-- Implementation: `src/modules/api.js` `fetchPrices()` function (lines 5-27)
+- None
+
+## Data Flow Summary
+
+```
+User Action → LocalStorage (immediate)
+           → Supabase (async, when logged in)
+           → BrAPI (on-demand price fetch)
+```
 
 ---
 

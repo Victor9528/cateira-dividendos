@@ -7,19 +7,19 @@
 
 ```text
 ┌─────────────────────────────────────────────────────────────┐
-│                      Browser Client                        │
-├──────────────────┬──────────────────┬───────────────────────┤
-│   Presentation   │   Business Logic │    External API       │
-│  `src/main.js`  │  `src/modules/logic.js` │ `src/modules/api.js` │
-│  `src/modules/ui.js` │                │ `brapi.dev`          │
-│  `index.html`   │                   │                       │
-│  `src/styles/main.css` │             │                       │
-└────────┬─────────┴────────┬─────────┴──────────┬────────────┘
-         │                  │                     │
-         ▼                  ▼                     ▼
+│                    index.html                               │
+│              (Single Page Entry)                           │
+├─────────────────────────────────────────────────────────────┤
+│                      src/main.js                          │
+│              (Main Orchestrator)                          │
+├───────────┬───────────┬───────────┬───────────┬────────────┤
+│  ui.js    │ logic.js  │  api.js  │  state.js  │  auth.js   │
+│ (Render)  │  (Calc)  │ (Fetch)  │  (Data)   │  (Auth)   │
+└───────────┴───────────┴───────────┴───────────┴────────────┘
+         │          │          │          │          │
+         ▼          ▼          ▼          ▼          ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                    State & Persistence                       │
-│  `src/modules/state.js` (localStorage)                      │
+│   DOM + localStorage + Supabase (Cloud) + BrAPI (External)  │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -27,133 +27,140 @@
 
 | Component | Responsibility | File |
 |-----------|----------------|------|
-| Main Orchestrator | Initializes app, binds events, coordinates modules | `src/main.js` |
-| State Management | Manages app state (assets, prices, quantities), persists to localStorage | `src/modules/state.js` |
-| API Integration | Fetches stock prices from brapi.dev API | `src/modules/api.js` |
-| Business Logic | Calculates portfolio values, aporte suggestions, formatting | `src/modules/logic.js` |
-| UI Rendering | Renders tables, summary, status indicators, handles UI updates | `src/modules/ui.js` |
-| Entry HTML | Loads app script, defines UI structure | `index.html` |
-| Styles | Application styling | `src/styles/main.css` |
+| main.js | Event handling, initialization,orchestration | `src/main.js` |
+| ui.js | Table rendering, summary cards, status display | `src/modules/ui.js` |
+| logic.js | Portfolio calculations, target quantities | `src/modules/logic.js` |
+| state.js | State management, persistence, cloud sync | `src/modules/state.js` |
+| api.js | External API calls to BrAPI | `src/modules/api.js` |
+| auth.js | Supabase authentication UI | `src/modules/auth.js` |
+| supabase.js | Supabase client initialization | `src/modules/supabase.js` |
+| theme.js | Dark/light theme switching | `src/modules/theme.js` |
 
 ## Pattern Overview
 
-**Overall:** Modular Vanilla JS Architecture with clear separation of concerns, using ES Modules (ESM) as enabled by Vite bundler.
+**Overall:** Modular Vanilla JavaScript SPA
 
 **Key Characteristics:**
-- No frontend framework (React, Vue, etc.) — vanilla JS only
-- Single-page application (SPA) with client-side rendering
-- State persistence via browser localStorage
-- External data from brapi.dev REST API
-- Each module has a single, well-defined responsibility
+- Single HTML page with ES6 modules
+- Event-driven architecture with callback objects
+- Dual persistence: localStorage (default) + Supabase (cloud sync)
+- External API integration for real-time stock prices
 
 ## Layers
 
-**Presentation Layer:**
-- Purpose: Renders UI, handles user interactions, updates DOM
-- Location: `src/modules/ui.js`, `index.html`, `src/styles/main.css`, `src/main.js` (event bindings)
-- Contains: DOM manipulation, event handlers, UI rendering functions
-- Depends on: Business Logic Layer, State Layer
-- Used by: Browser DOM / User
+**UI Layer:**
+- Purpose: Render tables, handle user interactions
+- Location: `src/modules/ui.js`, `index.html`
+- Contains: DOM manipulation functions, table rendering, event binding
+- Depends on: state.js, logic.js
+- Used by: main.js
 
 **Business Logic Layer:**
-- Purpose: Implements core portfolio calculation logic
+- Purpose: Portfolio calculations, target quantities
 - Location: `src/modules/logic.js`
-- Contains: Portfolio value calculations, aporte suggestion algorithms, currency/percentage formatting
-- Depends on: State Layer
-- Used by: Presentation Layer, Main Orchestrator
+- Contains: `getTotalPortfolio()`, `calcTargetQuantities()`, formatters
+- Depends on: state.js
+- Used by: main.js, ui.js
 
-**State Layer:**
-- Purpose: Manages all application state, handles persistence
+**Data Layer:**
+- Purpose: State management, persistence
 - Location: `src/modules/state.js`
-- Contains: Asset list, price cache, quantity tracking, API token, localStorage read/write
-- Depends on: None (leaf module)
-- Used by: All other modules
+- Contains: ATIVOS array, quantities, prices, localStorage sync, Supabase sync
+- Used by: main.js, logic.js, ui.js
 
-**External Integration Layer:**
-- Purpose: Fetches external data from third-party APIs
-- Location: `src/modules/api.js`
-- Contains: brapi.dev API client, rate limiting logic
-- Depends on: State Layer (for API token, price cache)
-- Used by: Main Orchestrator
+**Infrastructure Layer:**
+- Purpose: External integrations
+- Location: `src/modules/api.js` (BrAPI), `src/modules/auth.js` (Supabase Auth), `src/modules/supabase.js`, `src/modules/theme.js`
+- Contains: API clients, auth handlers, theme manager
 
 ## Data Flow
 
-### Primary Request Path (App Initialization)
-1. Browser loads `index.html` (`index.html:139`) which imports `src/main.js` as ES module
-2. `src/main.js:106` calls `init()` which runs `loadState()` from `src/modules/state.js:39` to restore state from localStorage
-3. `src/main.js:108-109` calls `renderTables()` and `updateSummary()` to initially render UI
-4. `src/main.js:119` calls `handleRefresh()` which triggers `fetchPrices()` from `src/modules/api.js:5`
-5. API returns prices, `src/modules/state.js:17` updates `prices` object, triggers UI re-render via `onUpdate` callback
-6. `src/main.js:60` calls `handleCalc()` to compute initial aporte suggestions
+### Primary Request Path
 
-### User Action Flow (Quantity Change)
-1. User edits quantity input in table row (`src/modules/ui.js:115` event listener)
-2. Callback `onQtyChange` in `src/main.js:10` updates `quantities` in state, saves state, updates summary, recalculates aporte
+1. **User Action** → Event handler in `main.js` (`src/main.js:55`)
+2. **API Call** → `api.js` fetches prices from BrAPI (`src/modules/api.js:5`)
+3. **State Update** → Updates `prices` object in `state.js` (`src/modules/state.js`)
+4. **Calculation** → `logic.js` computes targets (`src/modules/logic.js:15`)
+5. **Render** → `ui.js` redraws tables (`src/modules/ui.js:143`)
 
-### Price Refresh Flow
-1. User clicks refresh button (`src/main.js:112` event binding)
-2. `handleRefresh()` disables button, shows loading state, calls `fetchPrices()` sequentially for all assets
-3. Each asset price is fetched from brapi.dev, 100ms delay between requests to avoid rate limiting
-4. On completion, updates status, recalculates aporte suggestions
+### Cloud Sync Flow
+
+1. **Auth Change** → `auth.js` triggers callback (`src/modules/auth.js:193`)
+2. **Sync from Cloud** → `state.js` fetches from Supabase (`src/modules/state.js:89`)
+3. **Update State** → Merges remote data to ATIVOS/quantities
+4. **Save to Local** → Persists to localStorage + syncs back to cloud
+
+**State Management:**
+- In-memory: `ATIVOS`, `quantities`, `prices` (module-level exports in `state.js`)
+- Persistence: `localStorage` (primary), `Supabase` (optional, auth-required)
 
 ## Key Abstractions
 
-**Asset Object:**
-- Purpose: Represents a single asset in the portfolio
-- Examples: `{ ticker:'ITUB4', setor:'Bancos', cat:'div', peso:6 }` (defined in `src/modules/state.js:3-31`)
-- Pattern: Plain JavaScript object with fixed properties (ticker, setor, cat, peso)
+**ATIVOS Array:**
+- Purpose: Represents user's portfolio assets
+- Structure: `{ ticker, setor, cat, peso }`
+- Pattern: Mutable array exported from state module
 
-**Portfolio State:**
-- Purpose: Centralized mutable state for the application
-- Examples: `ATIVOS` array, `prices` object, `quantities` object (all in `src/modules/state.js`)
-- Pattern: Exported mutable variables with explicit save/load functions for persistence
+**uiCallbacks Object:**
+- Purpose: Bridge between UI events and state mutations
+- Structure: `{ onQtyChange, onQtyAdj, onWeightChange, onWeightAdj, onRemove }`
+- Pattern: Callback object passed through render chain
+
+**Dual Storage:**
+- Local: `localStorage` - Immediate persistence, offline-capable
+- Cloud: `Supabase` - Cross-device sync, requires authentication
 
 ## Entry Points
 
-**Browser Entry:**
+**HTML Entry Point:**
 - Location: `index.html`
-- Triggers: User opens app in browser
-- Responsibilities: Loads Vite-bundled app script, defines static UI structure
+- Triggers: Browser loads page, executes `src/main.js` as ES6 module
+- Responsibilities: Layout, modals, table structures
 
-**Application Entry:**
+**JavaScript Entry Point:**
 - Location: `src/main.js`
-- Triggers: Loaded as ES module by `index.html`
-- Responsibilities: Initializes state, renders initial UI, binds event handlers, starts initial price refresh
+- Triggers: Module import from index.html
+- Responsibilities: Initialize app, bind event handlers, load state, auto-fetch prices
 
 ## Architectural Constraints
 
-- **Threading:** Single-threaded JavaScript event loop; API requests are asynchronous (async/await) but processed sequentially with delays
-- **Global state:** Mutable exported variables in `src/modules/state.js` (`ATIVOS`, `prices`, `quantities`, etc.) act as shared global state
-- **Circular imports:** None detected — import hierarchy is linear: api → state, logic → state, ui → state + logic, main → state + api + logic + ui
-- **Persistence:** Limited to browser localStorage, so data is per-device and can be cleared by the user
-- **API Rate Limiting:** Sequential API requests with 100ms delay between calls to comply with brapi.dev free tier limits
+- **Threading:** Single-threaded JavaScript (browser)
+- **Global state:** Module-level exports in `state.js` (`ATIVOS`, `quantities`, `prices`)
+- **Circular imports:** None detected (modules import from state.js, no cross-dependencies)
+- **No build step required:** Vite for dev only; runs as plain ES6 modules in browser
 
 ## Anti-Patterns
 
 ### Hardcoded API Token
-**What happens:** API token is hardcoded in `src/modules/state.js:37` as an exported mutable variable with a default token value.
-**Why it's wrong:** Exposes API token in client-side code, which is accessible to any user via browser dev tools; violates secret management best practices.
-**Do this instead:** Use environment variables with Vite's `import.meta.env` and never commit tokens to source code; allow users to input tokens via UI (which the app already supports, but should not have a fallback hardcoded token.)
 
-### Mutable Shared State
-**What happens:** State variables in `src/modules/state.js` are exported as mutable `let` variables, allowing any module to modify them directly.
-**Why it's wrong:** Makes it hard to track state changes, can lead to unexpected side effects.
-**Do this instead:** Use getter/setter functions for state access, or implement a simple state store with controlled mutations.
+**What happens:** Token stored in state.js source code (`src/modules/state.js:41`)
+```javascript
+export let apiToken = '97aSjyCWDW3pXz8WqXTz9g';
+```
+**Why it's wrong:** Exposes API token in version control
+**Do this instead:** Store only in localStorage, prompt user on first use
+
+### Single Main File
+
+**What happens:** All event handlers in one 285-line file (`src/main.js`)
+**Why it's wrong:** Hard to maintain as app grows
+**Do this instead:** Extract handlers into separate module files
 
 ## Error Handling
 
-**Strategy:** Fail-silent with UI status indicators and console logging
+**Strategy:** Try-catch with user-facing alerts, console.warn for silent failures
 
 **Patterns:**
-- API errors: Caught in try/catch, logged to console, UI shows error status (`src/modules/api.js:24-26`)
-- State load/save errors: Caught in try/catch, logged to console (`src/modules/state.js:56-57`, `67-68`)
-- Invalid user input: Handled via `parseInt`/`parseFloat` with fallback to 0 or empty values
+- API failures: Silent skip with warning, continue processing next asset
+- Auth errors: Display user-friendly message in modal
+- Validation: Alert with specific error message
+- Storage errors: Try-catch wraps localStorage operations
 
 ## Cross-Cutting Concerns
 
-**Logging:** Console logging only (`console.error`, `console.warn`) in `src/modules/state.js` and `src/modules/api.js`
-**Validation:** Minimal — user input is parsed with fallback values, no formal validation
-**Authentication:** None for the app itself; brapi.dev API uses optional token passed as query parameter
+**Logging:** `console.error()` for errors, `console.warn()` for warnings
+**Validation:** Ticker validation via API call before adding
+**Authentication:** Supabase Auth with email/password, password recovery flow
 
 ---
 
