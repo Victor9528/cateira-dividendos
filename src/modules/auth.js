@@ -64,12 +64,13 @@ export function setupAuthUI(onAuthChange) {
   };
 
   const setBusy = (isBusy) => {
-    const btns = authForm.querySelectorAll('button');
-    btns.forEach(b => b.disabled = isBusy);
-    if (isBusy) btns[0].innerHTML = '<span class="spinner"></span>';
-    else {
-      btns[0].textContent = 'Entrar';
-      btns[1].textContent = 'Cadastrar';
+    const submitBtns = authForm.querySelectorAll('button[type="submit"]');
+    submitBtns.forEach(b => b.disabled = isBusy);
+    if (isBusy) {
+      submitBtns[0].innerHTML = '<span class="spinner"></span>';
+    } else {
+      submitBtns[0].textContent = 'Entrar';
+      submitBtns[1].textContent = 'Cadastrar';
     }
   };
 
