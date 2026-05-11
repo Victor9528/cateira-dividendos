@@ -37,7 +37,7 @@ const uiCallbacks = {
   onWeightAdj: (ticker, delta) => {
     const a = ATIVOS.find(x => x.ticker === ticker);
     if (a) {
-      a.peso = Math.max(0, a.peso + delta);
+      a.peso = Math.max(0, parseFloat((a.peso + delta * 0.5).toFixed(1)));
       saveState();
       updateSummary();
       renderTables(uiCallbacks);
