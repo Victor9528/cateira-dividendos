@@ -29,7 +29,7 @@ const uiCallbacks = {
   },
   onWeightChange: (ticker, val) => {
     const a = ATIVOS.find(x => x.ticker === ticker);
-    if (a) a.peso = parseFloat(val) || 0;
+    if (a) a.peso = parseFloat(String(val).replace(',', '.')) || 0;
     saveState();
     updateSummary();
     renderTables(uiCallbacks);

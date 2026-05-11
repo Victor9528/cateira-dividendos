@@ -110,7 +110,7 @@ export function renderRow(a, tbody, callbacks) {
     <td class="td-right">
       <div class="weight-control">
         <button class="weight-btn btn-minus">-</button>
-        <input type="number" class="weight-input" value="${a.peso}">
+        <input type="text" class="weight-input" value="${a.peso}" inputmode="decimal">
         <button class="weight-btn btn-plus">+</button>
       </div>
     </td>
@@ -133,7 +133,10 @@ export function renderRow(a, tbody, callbacks) {
   };
   tr.querySelector('.btn-qty-minus').onclick = () => callbacks.onQtyAdj(a.ticker, -1);
   tr.querySelector('.btn-qty-plus').onclick = () => callbacks.onQtyAdj(a.ticker, 1);
-  tr.querySelector('.weight-input').oninput = (e) => callbacks.onWeightChange(a.ticker, e.target.value);
+  tr.querySelector('.weight-input').onchange = (e) => {
+    const val = parseFloat(e.target.value.replace(',', '.')) || 0;
+    callbacks.onWeightChange(a.ticker, val);
+  };
   tr.querySelector('.btn-minus').onclick = () => callbacks.onWeightAdj(a.ticker, -1);
   tr.querySelector('.btn-plus').onclick = () => callbacks.onWeightAdj(a.ticker, 1);
   tr.querySelector('.btn-remove').onclick = () => callbacks.onRemove(a.ticker);
