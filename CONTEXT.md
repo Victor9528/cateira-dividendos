@@ -28,7 +28,12 @@
 │       ├── supabase.js    # Cliente Supabase (7 linhas)
 │       ├── dashboard.js   # Gráficos Chart.js (185 linhas)
 │       ├── theme.js       # Dark/Light mode (21 linhas)
-│       └── history.js     # Snapshots portfólio (140 linhas)
+│       ├── history.js     # Snapshots portfólio (140 linhas)
+│       └── charts/        # Aba Gráficos (inspirada no OpenChart, lightweight-charts)
+│           ├── workspace.js   # Grade 1/2/4, toolbar, desenhos, painel de alertas
+│           ├── data.js        # Histórico OHLCV brapi (range/interval) + cache 1h
+│           ├── indicators.js  # SMA, EMA, Bollinger, RSI (Wilder), MACD
+│           └── alerts.js      # Alertas de preço (localStorage) + toast/Notification
 ├── dist/                   # Build produção
 └── .planning/              # Documentação planejamento
 ```
@@ -45,6 +50,7 @@
 9. **Dashboard** - Gráficos de alocação e comparação alvo vs atual
 10. **Export/Import** - JSON do portfólio
 11. **Theme** - Dark/Light mode
+12. **Gráficos** - Aba estilo OpenChart: candles/linha, volume, MM/MME/Bollinger, RSI e MACD em painéis, grade 1/2/4, linha horizontal, tendência, borracha e alertas de preço
 
 ## Ativos Padrão (DEFAULT_ATIVOS)
 **Dividendos (17):** ITUB4, BBSE3, TAEE11, ITSA4, EGIE3, VIVT3, BTLG11, PETR4, VALE3, ABEV3, XPML11, KNRI11, HGRU11, CSMG3, HGLG11, TRPL4
@@ -62,6 +68,7 @@
 2. (11/05/2026) - Correção de bugs (botões btnTheme e btnConfig faltando no HTML)
 3. (11/05/2026) - Melhoria na lógica de snapshots (validação, não salvar se património = 0)
 4. (11/05/2026) - Adicionado gráfico de evolução histórica no dashboard (line chart)
+5. (01/11/2026) - Nova aba Gráficos inspirada no OpenChart (longsurf-ai/openchart, MIT) usando lightweight-charts v5; corrigido vazamento de elementos da Carteira nas outras abas
 
 ---
 

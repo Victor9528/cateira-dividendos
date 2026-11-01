@@ -12,6 +12,7 @@ import { renderTables, updateSummary, setStatus } from './modules/ui.js';
 import { initDashboard, updateDashboard } from './modules/dashboard.js';
 import { setupAuthUI } from './modules/auth.js';
 import { initTheme, toggleTheme } from './modules/theme.js';
+import { showCharts, checkPriceAlerts } from './modules/charts/workspace.js';
 import { saveSnapshot, loadHistory, getHistoryStats, deleteSnapshot, loadHistoryFromSupabase } from './modules/history.js';
 
 function renderDashboardStats() {
@@ -110,6 +111,7 @@ async function handleRefresh(force = false) {
       updateSummary();
     });
     setStatus('ok', 'cotações atualizadas');
+    checkPriceAlerts();
   } catch (e) {
     setStatus('err', 'erro ao buscar preços');
   } finally {
@@ -449,30 +451,25 @@ function init() {
   });
   
   // --- Tab Switching ---
+  const carteiraEls = () => [
+    ...document.querySelectorAll('#summary, #allocSection, .app > .section-header, .app > .table-wrap, .app > hr.divider')
+  ];
+
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.onclick = () => {
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       const tab = btn.dataset.tab;
+      carteiraEls().forEach(el => { el.style.display = tab === 'carteira' ? '' : 'none'; });
+      document.getElementById('dashboardSection').classList.toggle('hidden', tab !== 'dashboard');
+      document.getElementById('chartsSection').classList.toggle('hidden', tab !== 'graficos');
+      document.body.classList.toggle('charts-mode', tab === 'graficos');
       if (tab === 'dashboard') {
-        document.getElementById('summary').style.display = 'none';
-        document.getElementById('allocSection').style.display = 'none';
-        document.querySelectorAll('[id^="countDiv"]').forEach(el => el.style.display = 'none');
-        document.getElementById('tableDiv').style.display = 'none';
-        document.querySelector('hr.divider').style.display = 'none';
-        document.getElementById('tableCres').style.display = 'none';
-        document.getElementById('dashboardSection').classList.remove('hidden');
         renderDashboardStats();
         const period = document.getElementById('historyPeriod')?.value || 'all';
         updateDashboard(period);
-      } else {
-        document.getElementById('summary').style.display = '';
-        document.getElementById('allocSection').style.display = '';
-        document.querySelectorAll('[id^="countDiv"]').forEach(el => el.style.display = '');
-        document.getElementById('tableDiv').style.display = '';
-        document.querySelector('hr.divider').style.display = '';
-        document.getElementById('tableCres').style.display = '';
-        document.getElementById('dashboardSection').classList.add('hidden');
+      } else if (tab === 'graficos') {
+        showCharts();
       }
     };
   });
